@@ -1,3 +1,5 @@
+//credit: https://docs.expo.io/versions/v32.0.0/sdk/camera/
+
 import React from 'react';
 import {
   Image,
@@ -14,15 +16,22 @@ import { MonoText } from '../components/StyledText';
 
 
 import { Camera, Permissions } from 'expo';
+import { FaceDetector } from 'expo';
+import { Button } from 'react-native';
+
 
 export default class HomeScreen extends React.Component {
   static navigationOptions = {
     header: null,
   };
 
+  //Camera and Face Detector configurations
   state = {
     hasCameraPermission: null,
     type: Camera.Constants.Type.back,
+    faceDetecting: true,
+    faceDetected: false,
+    pictureTaken: false
   };
 
   async componentDidMount(){
@@ -30,6 +39,41 @@ export default class HomeScreen extends React.Component {
     this.setState({ hasCameraPermission: status === "granted"});
   }
 
+
+  //switches the boolean values, essentially controls
+  //the messages displayed which tell us if there is a face
+  //detected
+  handleFacesDetected = ({faces}) => {
+    if (faces.length === 1) 
+    {
+      this.setState({
+        faceDetected: true
+      });
+    }
+    else
+    {
+      this.setState({
+        faceDetected: false
+      })
+    }
+  }
+
+  //handles taking the picture
+  takePicture = () => {
+    this.setState({
+      pictureTaken: true,
+    });
+    if (this.camera) {
+      console.log('take picture');
+      //result is in an URI format -- result to be passed onto API
+      this.camera.takePictureAsync({onPictureSaved: (result)=> {
+        console.log(result);
+        return result;
+      }});
+    }
+  };
+
+  //what the application is displaying
   render() {
     const { hasCameraPermission } = this.state;
     if (hasCameraPermission === null)
@@ -43,7 +87,18 @@ export default class HomeScreen extends React.Component {
     else {
       return (
         <View style={{flex: 1}}>
-          <Camera style={{flex: 1}} type={this.state.type}>
+          <Camera style={{flex: 1}} type={this.state.type}
+           onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
+           onFaceDetectionError = {this.handleFaceDetectionErorr}
+           faceDetectorSettings = {{
+             mode: FaceDetector.Constants.Mode.fast,
+             detectLandmarks: FaceDetector.Constants.Landmarks.all,
+             runClassifications: FaceDetector.Constants.Classifications.none,
+           }}
+           ref = {ref => {
+             this.camera = ref;
+           }}
+           >
           <View 
             style={{
               flex: 1,
@@ -52,21 +107,28 @@ export default class HomeScreen extends React.Component {
             }}>
             <TouchableOpacity
               style={{
-                flex: 0.1,
+                flex: 1,
                 alignSelf: 'flex-end',
                 alignItems: 'center',
-              }}
-              onPress={()=> {
-                this.setState({
-                  type: this.state.type === Camera.Constants.Type.back
-                  ? Camera.Constants.Type.front
-                  : Camera.Constants.Type.back,
-                });
               }}>
+              //tells the user if there is a face detected
               <Text 
-                style= {{ fontSize: 18, marginBottom: 10, color: 'white'}}>
-                {' '}Flip{' '}
-                </Text>
+                style= {{ fontSize: 10, marginBottom: 10, color: 'white'}}>
+                {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
+              </Text> 
+              
+              //button to snap picture with 
+              <Button 
+                style={{
+                  flex: 1,
+                  alignSelf: 'center',
+                  alignItems: 'center',
+                }}
+                onPress = {this.takePicture}
+                title="Snap picture"
+                color="#fff"
+                />
+                
               </TouchableOpacity>
             </View>
           </Camera>
