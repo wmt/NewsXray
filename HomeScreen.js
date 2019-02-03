@@ -18,6 +18,7 @@ import { MonoText } from '../components/StyledText';
 import { Camera, Permissions } from 'expo';
 import { FaceDetector } from 'expo';
 import { Button } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 export default class HomeScreen extends React.Component {
@@ -58,14 +59,14 @@ export default class HomeScreen extends React.Component {
     }
   }
 
-  //handles taking the picture
+
+//handles taking the picture
   takePicture = () => {
     this.setState({
       pictureTaken: true,
     });
     if (this.camera) {
       console.log('take picture');
-      //result is in an URI format -- result to be passed onto API
       this.camera.takePictureAsync({onPictureSaved: (result)=> {
         console.log(result);
         return result;
@@ -73,7 +74,7 @@ export default class HomeScreen extends React.Component {
     }
   };
 
-  //what the application is displaying
+ //what the application is displaying
   render() {
     const { hasCameraPermission } = this.state;
     if (hasCameraPermission === null)
@@ -111,24 +112,18 @@ export default class HomeScreen extends React.Component {
                 alignSelf: 'flex-end',
                 alignItems: 'center',
               }}>
-              //tells the user if there is a face detected
+            
               <Text 
                 style= {{ fontSize: 10, marginBottom: 10, color: 'white'}}>
                 {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
               </Text> 
-              
-              //button to snap picture with 
-              <Button 
-                style={{
-                  flex: 1,
-                  alignSelf: 'center',
-                  alignItems: 'center',
-                }}
-                onPress = {this.takePicture}
-                title="Snap picture"
-                color="#fff"
-                />
-                
+
+              //button to snap pic
+              <MaterialCommunityIcons 
+                onPress={this.takePicture}
+                name="circle-outline"
+                style={{color: 'white', fontSize: 100}}>
+                </MaterialCommunityIcons>
               </TouchableOpacity>
             </View>
           </Camera>
