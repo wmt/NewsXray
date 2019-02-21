@@ -1,3 +1,5 @@
+//credit: https://docs.expo.io/versions/v32.0.0/sdk/camera/
+
 import React from 'react';
 import {
   Image,
@@ -8,30 +10,113 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { WebBrowser } from 'expo';
 
+import {Modal, TouchableHighlight, Alert} from 'react-native';
+
+import { WebBrowser } from 'expo';
 import { MonoText } from '../components/StyledText';
 
-
 import { Camera, Permissions } from 'expo';
+import { FaceDetector } from 'expo';
+import { Button } from 'react-native';
+
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { createStackNavigator, createAppContainer } from 'react-navigation';
+
+import FacePlusPlusApi from '../backend/FacePlusPlusApi'; 
+import firebase from "firebase"; 
+require("firebase/firestore");
+import Database from '../backend/Database'; 
 
 export default class HomeScreen extends React.Component {
+
   static navigationOptions = {
     header: null,
   };
 
+  
+  //Camera and Face Detector configurations
   state = {
     hasCameraPermission: null,
     type: Camera.Constants.Type.back,
+    faceDetecting: true,
+    faceDetected: false,
+    pictureTaken: false,
+    modalVisible: false,
+    name: 'Unknown',
+    party: 'Unknown',
+    funding: 'Unknown',
   };
+
+  setModalVisible(visible) {
+    this.setState({modalVisible: visible});
+  }
 
   async componentDidMount(){
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted"});
+    this.setState({ hasCameraPermission: status === "granted"});
+    if ( !firebase.apps.length ) {firebase.initializeApp(Database.FirebaseConfig)}; 
   }
 
+  //switches the boolean values, essentially controls
+  //the messages displayed which tell us if there is a face
+  //detected
+  handleFacesDetected = ({faces}) => {
+    if (faces.length === 1) 
+    {
+      this.setState({
+        faceDetected: true
+      });
+    }
+    else
+    {
+      this.setState({
+        faceDetected: false
+      })
+    }
+  }
+
+//handles taking the picture & returns Object with URI
+  takePicture = () => {
+    this.setState({
+      pictureTaken: true,
+    });
+    if (this.camera) {
+      console.log('take picture');
+      this.camera.takePictureAsync({onPictureSaved: (result)=> {
+        a = new FacePlusPlusApi(); 
+        targetName =  new a.upload(result.uri).then( (name) => {
+          console.log(name); 
+          this.setState({
+            name: name
+          }) 
+        });
+
+        const db = firebase.firestore(); 
+        var congressRef = db.collection('congress').doc('AEQJVK8JVEVc2KsW6uzR');
+        var getDoc = congressRef.get()
+          .then(doc => {
+            if (!doc.exists) {
+              console.log('No such document!'); 
+            }
+            else {
+              console.log('Document data:', doc.data());
+            }
+          })
+        //var targetRef = db.ref("congress").orderByChild('name').equalTo('Alexandria Ocasio-Cortez');
+
+        this.pic = result["uri"];
+        return result;
+      }});
+    }
+  };
+
+
+ //what the application is displaying
   render() {
     const { hasCameraPermission } = this.state;
+  
     if (hasCameraPermission === null)
     {
       return <View />;
@@ -43,30 +128,87 @@ export default class HomeScreen extends React.Component {
     else {
       return (
         <View style={{flex: 1}}>
-          <Camera style={{flex: 1}} type={this.state.type}>
-          <View 
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              flexDirection: 'row',
+          <Camera 
+           style={{flex: 1}} 
+           type={this.state.type}
+           onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
+           onFaceDetectionError = {this.handleFaceDetectionErorr}
+           faceDetectorSettings = {{
+             mode: FaceDetector.Constants.Mode.fast,
+             detectLandmarks: FaceDetector.Constants.Landmarks.all,
+             runClassifications: FaceDetector.Constants.Classifications.none,
+           }}
+           ref = {ref => {
+             this.camera = ref;
+           }}>
+
+        <View style= {styles.viewContainer}>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={this.state.modalVisible}
+            onRequestClose={()=>{
+              Alert.alert("Modal has been closed.");
             }}>
+
+            <View style={styles.modalContainer}>            
+              <View style={styles.innerModalContainer}>
+                <View style={styles.navBar}>
+                  <TouchableOpacity
+                    onPress={()=>{
+                      this.setModalVisible(!this.state.modalVisible);
+                    }}>
+
+                    <MaterialCommunityIcons
+                      onPress={()=>{
+                        this.setModalVisible(!this.state.modalVisible);
+                      }}
+                      name="close-circle-outline"
+                      style={styles.navBarButton}>
+                    </MaterialCommunityIcons>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalContent}>  
+                  <Button 
+                    onPress = {()=>{
+                      console.log("a clicked")
+                    }}
+                    title="About application">
+                  </Button>
+            
+                  <Button 
+                    onPress = {()=>{
+                      console.log("b clicked")
+                    }}
+                    title="Tutorial">
+                  </Button>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
             <TouchableOpacity
-              style={{
-                flex: 0.1,
-                alignSelf: 'flex-end',
-                alignItems: 'center',
-              }}
-              onPress={()=> {
-                this.setState({
-                  type: this.state.type === Camera.Constants.Type.back
-                  ? Camera.Constants.Type.front
-                  : Camera.Constants.Type.back,
-                });
+              onPress={()=>{
+                this.setModalVisible(true);
               }}>
-              <Text 
-                style= {{ fontSize: 18, marginBottom: 10, color: 'white'}}>
-                {' '}Flip{' '}
-                </Text>
+              <Image source = {require('../assets/images/NewsXRayLogo.png')}></Image> 
+            </TouchableOpacity>
+
+        </View>
+
+          <View style={styles.cameraButtonsContainer}>
+            <TouchableOpacity style={styles.cameraTouchableOpacity}>
+              <Text style = {styles.faceDetectedText}>
+                {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
+              </Text> 
+              
+              <MaterialCommunityIcons 
+                onPress={this.takePicture}
+                name="circle-outline"
+                style={styles.takePictureButton}>
+                </MaterialCommunityIcons>
               </TouchableOpacity>
             </View>
           </Camera>
@@ -74,127 +216,72 @@ export default class HomeScreen extends React.Component {
       )
     }
   }
-
-  _maybeRenderDevelopmentModeWarning() {
-    if (__DEV__) {
-      const learnMoreButton = (
-        <Text onPress={this._handleLearnMorePress} style={styles.helpLinkText}>
-          Learn more
-        </Text>
-      );
-
-      return (
-        <Text style={styles.developmentModeText}>
-          Development mode is enabled, your app will be slower but you can use useful development
-          tools. {learnMoreButton}
-        </Text>
-      );
-    } else {
-      return (
-        <Text style={styles.developmentModeText}>
-          You are not in development mode, your app will run at full speed.
-        </Text>
-      );
-    }
-  }
-
-  _handleLearnMorePress = () => {
-    WebBrowser.openBrowserAsync('https://docs.expo.io/versions/latest/guides/development-mode');
-  };
-
-  _handleHelpPress = () => {
-    WebBrowser.openBrowserAsync(
-      'https://docs.expo.io/versions/latest/guides/up-and-running.html#can-t-see-your-changes'
-    );
-  };
 }
 
 const styles = StyleSheet.create({
-  container: {
+
+  viewContainer: {
+    flex: 2,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    marginTop: 40,
+    marginLeft: 20
+  },
+
+  modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  developmentModeText: {
-    marginBottom: 20,
-    color: 'rgba(0,0,0,0.4)',
-    fontSize: 14,
-    lineHeight: 19,
-    textAlign: 'center',
+
+  navBar: {
+    flexDirection: 'row',
+    height: 70,
+    //backgroundColor: "#1eaaf1",
+    borderRadius: 10,
   },
-  contentContainer: {
-    paddingTop: 30,
-  },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  welcomeImage: {
-    width: 100,
-    height: 80,
-    resizeMode: 'contain',
-    marginTop: 3,
-    marginLeft: -10,
-  },
-  getStartedContainer: {
-    alignItems: 'center',
-    marginHorizontal: 50,
-  },
-  homeScreenFilename: {
-    marginVertical: 7,
-  },
-  codeHighlightText: {
-    color: 'rgba(96,100,109, 0.8)',
-  },
-  codeHighlightContainer: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 3,
-    paddingHorizontal: 4,
-  },
-  getStartedText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  tabBarInfoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    ...Platform.select({
-      ios: {
-        shadowColor: 'black',
-        shadowOffset: { height: -3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 20,
-      },
-    }),
-    alignItems: 'center',
-    backgroundColor: '#fbfbfb',
-    paddingVertical: 20,
-  },
-  tabBarInfoText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    textAlign: 'center',
-  },
-  navigationFilename: {
-    marginTop: 5,
-  },
-  helpContainer: {
+
+  navBarButton: {
+    color: "white",
+    fontSize: 40,
+    marginLeft: 325,
     marginTop: 15,
+    marginRight: 5,
+  },
+
+  innerModalContainer: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 10,
+    marginTop: 30,
+    marginLeft: 15,
+    marginRight: 15, 
+    height: '90%',
+  },
+
+  cameraButtonsContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+  },
+
+  cameraTouchableOpacity: {
+    flex: 1,
+    alignSelf: 'flex-end',
     alignItems: 'center',
   },
-  helpLink: {
-    paddingVertical: 15,
+
+  takePictureButton: {
+    color: 'white',
+    fontSize: 100
   },
-  helpLinkText: {
-    fontSize: 14,
-    color: '#2e78b7',
+
+  faceDetectedText: {
+    fontSize: 20, 
+    marginBottom: 10, 
+    color: 'white'
+  },
+  modalContent: {
+    alignItems: 'center',
+    alignSelf: 'center',
   }
-  
 });
+
