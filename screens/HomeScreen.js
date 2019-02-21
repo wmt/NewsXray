@@ -101,27 +101,30 @@ export default class HomeScreen extends React.Component {
 
         //api call
         a = new FacePlusPlusApi();
-        a.
+        const db = firebase.firestore();
+        var congressRef = db.collection('congress').doc('AEQJVK8JVEVc2KsW6uzR');
+
         targetName = a.upload(result["uri"]).then((result)=>{
-          this.setState({name: result},()=>{
+          this.setState({
+            name: result,
+          },()=>{
             console.log('name: '+this.state.name);
+            var getDoc = congressRef.get()
+            .then(doc =>{
+              if (!doc.exists)
+              {
+                console.log("no such document");
+              }
+              else {
+                console.log("Document data: ", doc.data());
+                console.log(doc.data()["funding"]["City University of New York"]);
+              }
+            });
             this.setResultModal(true,this.state.name)
           })
         });
 
-        const db = firebase.firestore();
-        var congressRef = db.collection('congress').doc('AEQJVK8JVEVc2KsW6uzR');
-        var getDoc = congressRef.get()
-          .then(doc =>{
-            if (!doc.exists)
-            {
-              console.log("no such document");
-            }
-            else {
-              console.log("Document data: ", doc.data());
-            }
-          });
-  
+
         //call function to open up modal here
         return result;
       }});
@@ -189,11 +192,15 @@ export default class HomeScreen extends React.Component {
 
                 {/* Information returned from back-end goes here */}
                 <View style={styles.modalContent}>
-                  <Image 
-                    source={require("./AOC.png")}
-                    style={{height: 100, width: 100}} />
+                  <Text style={styles.resultTitle}> Name </Text>
+                  <Text style={styles.resultName}> {this.state.name} </Text>
 
-                  <Text style={styles.resultName}> Name: {this.state.name} </Text>
+                  <View style={styles.textContainer}>
+                    <Text style={styles.resultTitle}> Funding source </Text>
+                    <Text style={styles.fundingSource}> City University of New York  <Text style={styles.fundingMoney}>               $6,847 </Text> </Text>
+                    <Text style={styles.fundingSource}> Columbia University  <Text style={styles.fundingMoney}>                             $10,867 </Text> </Text>
+                    <Text style={styles.fundingSource}> Justice Democrats <Text style={styles.fundingMoney}>                                     $7,712 </Text> </Text>
+                  </View>
                 </View>
 
               </View>
@@ -322,9 +329,22 @@ const styles = StyleSheet.create({
     marginBottom: 10, 
     color: 'white'
   },
+  
+  fundingSource: {
+    fontSize: 18,
+    fontFamily: 'lato-reg',
+    paddingLeft: 20,
+    paddingTop: 15,
+    //paddingRight: 30,
+  },
+
+  fundingMoney: {
+    //marginLeft: 30,
+  },
+
   modalContent: {
-    alignItems: 'center',
-    alignSelf: 'center',
+    //alignItems: 'center',
+   // alignSelf: 'center',
   },
 
   modalImage: {
@@ -334,8 +354,20 @@ const styles = StyleSheet.create({
   },
 
   resultName: {
-    alignSelf: 'flex-end',
-    fontSize: 15,
+    fontSize: 25,
     fontFamily: 'lato-reg',
-  }
+    alignSelf: 'center',
+  },
+
+  resultTitle: {
+    alignSelf: 'center',
+    fontSize: 30,
+    fontFamily: 'lato-bold',
+    paddingTop: 30,
+  },
+
+  textContainer: {
+    alignItems: 'flex-start',
+  },
+
 });
