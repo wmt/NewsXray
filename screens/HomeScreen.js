@@ -1,6 +1,6 @@
 //credit: https://docs.expo.io/versions/v32.0.0/sdk/camera/
 
-import React from 'react';
+import React, { Component } from 'react';
 import {
   Image,
   Platform,
@@ -21,7 +21,15 @@ import { FaceDetector } from 'expo';
 import { Button } from 'react-native';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { createStackNavigator, createAppContainer } from 'react-navigation';
+
+
+import FacePlusPlusApi from '../backend/FacePlusPlusApi'; 
+import firebase from "firebase"; 
+require("firebase/firestore");
+
+import Database from '../backend/Database'; 
+
+
 
 
 export default class HomeScreen extends React.Component {
@@ -39,15 +47,29 @@ export default class HomeScreen extends React.Component {
     faceDetected: false,
     pictureTaken: false,
     modalVisible: false,
+    resultModalVisible: false,
+    name: "Unknown",
+    party: "Unknown",
+    funding: "Unknown",
   };
 
+  //opens the modal for app information and tutorial
   setModalVisible(visible) {
     this.setState({modalVisible: visible});
+  }
+
+  //opens modal for returned data
+  setResultModal(visible, returnedName) {
+    this.setState({
+      resultModalVisible: visible,
+      name: returnedName
+    });
   }
 
   async componentDidMount(){
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted"});
+    if (!firebase.apps.length) { firebase.initializeApp(Database.FirebaseConfig)};
   }
 
   //switches the boolean values, essentially controls
@@ -76,7 +98,31 @@ export default class HomeScreen extends React.Component {
     if (this.camera) {
       console.log('take picture');
       this.camera.takePictureAsync({onPictureSaved: (result)=> {
-        this.pic = result["uri"];
+
+        //api call
+        a = new FacePlusPlusApi();
+        a.
+        targetName = a.upload(result["uri"]).then((result)=>{
+          this.setState({name: result},()=>{
+            console.log('name: '+this.state.name);
+            this.setResultModal(true,this.state.name)
+          })
+        });
+
+        const db = firebase.firestore();
+        var congressRef = db.collection('congress').doc('AEQJVK8JVEVc2KsW6uzR');
+        var getDoc = congressRef.get()
+          .then(doc =>{
+            if (!doc.exists)
+            {
+              console.log("no such document");
+            }
+            else {
+              console.log("Document data: ", doc.data());
+            }
+          });
+  
+        //call function to open up modal here
         return result;
       }});
     }
@@ -98,9 +144,10 @@ export default class HomeScreen extends React.Component {
     else {
       return (
         <View style={{flex: 1}}>
-          <Camera 
+          <Camera
            style={{flex: 1}} 
            type={this.state.type}
+           ratio="1:1"
            onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
            onFaceDetectionError = {this.handleFaceDetectionErorr}
            faceDetectorSettings = {{
@@ -112,7 +159,46 @@ export default class HomeScreen extends React.Component {
              this.camera = ref;
            }}>
 
+        {/* Modal for returned back-end info */}
         <View style= {styles.viewContainer}>
+           <Modal
+            animationType="slide"
+            transparent={true}
+            visible={this.state.resultModalVisible}
+            onRequestClose={()=>{
+              Alert.alert("Modal has been closed.");
+            }}>
+
+            <View style={styles.modalContainer}>
+              <View style={styles.innerModalContainer}>
+                <View style={styles.navBar}>
+                  <TouchableOpacity
+                    onPress={()=>{
+                      this.setResultModal(!this.state.resultModalVisible);
+                    }}>
+
+                    <MaterialCommunityIcons
+                      onPress={()=>{
+                        this.setResultModal(!this.state.resultModalVisible);
+                      }}
+                      name="close-circle-outline"
+                      style={styles.navBarButton}>
+                    </MaterialCommunityIcons>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Information returned from back-end goes here */}
+                <View style={styles.modalContent}>
+                  <Image 
+                    source={require("./AOC.png")}
+                    style={{height: 100, width: 100}} />
+
+                  <Text style={styles.resultName}> Name: {this.state.name} </Text>
+                </View>
+
+              </View>
+            </View>
+           </Modal>
 
           <Modal
             animationType="slide"
@@ -122,7 +208,7 @@ export default class HomeScreen extends React.Component {
               Alert.alert("Modal has been closed.");
             }}>
 
-            <View style={styles.modalContainer}>            
+            <View style={styles.modalContainer}>
               <View style={styles.innerModalContainer}>
                 <View style={styles.navBar}>
                   <TouchableOpacity
@@ -141,19 +227,7 @@ export default class HomeScreen extends React.Component {
                 </View>
 
                 <View style={styles.modalContent}>  
-                  <Button 
-                    onPress = {()=>{
-                      console.log("a clicked")
-                    }}
-                    title="About application">
-                  </Button>
-            
-                  <Button 
-                    onPress = {()=>{
-                      console.log("b clicked")
-                    }}
-                    title="Tutorial">
-                  </Button>
+                    {/* button for tutorial pages*/}
                 </View>
               </View>
             </View>
@@ -173,14 +247,14 @@ export default class HomeScreen extends React.Component {
               <Text style = {styles.faceDetectedText}>
                 {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
               </Text> 
-              
+
               <MaterialCommunityIcons 
                 onPress={this.takePicture}
                 name="circle-outline"
                 style={styles.takePictureButton}>
-                </MaterialCommunityIcons>
-              </TouchableOpacity>
-            </View>
+              </MaterialCommunityIcons>
+            </TouchableOpacity>
+          </View>
           </Camera>
         </View>
       )
@@ -200,18 +274,17 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    //backgroundColor: "rgba(0,0,0,0.5)",
   },
 
   navBar: {
     flexDirection: 'row',
     height: 70,
-    //backgroundColor: "#1eaaf1",
     borderRadius: 10,
   },
 
   navBarButton: {
-    color: "white",
+    color: "black",
     fontSize: 40,
     marginLeft: 325,
     marginTop: 15,
@@ -219,12 +292,12 @@ const styles = StyleSheet.create({
   },
 
   innerModalContainer: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 10,
-    marginTop: 30,
+    marginTop: 150,
     marginLeft: 15,
     marginRight: 15, 
-    height: '90%',
+    height: '50%',
   },
 
   cameraButtonsContainer: {
@@ -252,6 +325,17 @@ const styles = StyleSheet.create({
   modalContent: {
     alignItems: 'center',
     alignSelf: 'center',
+  },
+
+  modalImage: {
+    height: '50%',
+    width: '50%',
+    resizeMode: 'contain',
+  },
+
+  resultName: {
+    alignSelf: 'flex-end',
+    fontSize: 15,
+    fontFamily: 'lato-reg',
   }
 });
-
