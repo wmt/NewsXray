@@ -1,6 +1,6 @@
 //credit: https://docs.expo.io/versions/v32.0.0/sdk/camera/
 
-import React from 'react';
+import React, { Component } from 'react';
 import {
   Image,
   Platform,
@@ -21,11 +21,18 @@ import { FaceDetector } from 'expo';
 import { Button } from 'react-native';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { createStackNavigator, createAppContainer } from 'react-navigation';
 
-import FacePlusPlusApi from '../backend/FacePlusPlusApi'; 
+
+import FacePlusPlusApi from '../backend/FacePlusPlusApi';
+import CompressImage from '../backend/CompressImage'; 
 import firebase from "firebase"; 
+require("firebase/firestore");
+
 import Database from '../backend/Database'; 
+import ImageCompressor from '../backend/CompressImage';
+
+
+
 
 export default class HomeScreen extends React.Component {
 
@@ -42,20 +49,30 @@ export default class HomeScreen extends React.Component {
     faceDetected: false,
     pictureTaken: false,
     modalVisible: false,
-    name: 'Unknown',
-    party: 'Unknown',
-    funding: 'Unknown',
+    resultModalVisible: false,
+    name: "Unknown",
+    party: "Unknown",
+    funding: "Unknown",
+    image: null, 
   };
 
+  //opens the modal for app information and tutorial
   setModalVisible(visible) {
     this.setState({modalVisible: visible});
+  }
+
+  //opens modal for returned data
+  setResultModal(visible, returnedName) {
+    this.setState({
+      resultModalVisible: visible,
+      name: returnedName
+    });
   }
 
   async componentDidMount(){
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted"});
-    this.setState({ hasCameraPermission: status === "granted"});
-    if ( !firebase.apps.length ) {firebase.initializeApp(Database.FirebaseConfig)}; 
+    if (!firebase.apps.length) { firebase.initializeApp(Database.FirebaseConfig)};
   }
 
   //switches the boolean values, essentially controls
@@ -81,25 +98,59 @@ export default class HomeScreen extends React.Component {
     this.setState({
       pictureTaken: true,
     });
-    if (this.camera) {
-      console.log('take picture');
-      this.camera.takePictureAsync({onPictureSaved: (result)=> {
-        a = new FacePlusPlusApi(); 
-        targetName = a.upload(result.uri)
-        this.setState({
-          name: targetName
+
+   if (this.camera) {
+     console.log('DEV_MSG: picture taken');
+     const db = firebase.firestore();
+
+     this.camera.takePictureAsync( { base64: true } )
+     .then( async function(result) {
+       a = new FacePlusPlusApi();
+       let pic64 = await ImageCompressor.compressImage(result.uri);
+       let targetName = await a.upload(pic64);
+
+       return targetName;
+     }).then( result =>  {
+       this.setState({
+         name: result,
+      });
+       return result; })
+     .then( async function(result) {
+       console.log('name: '+ result);
+       let congressRef = await db.collection('congress').where("name", "==", result).get();
+       return congressRef;
+     })
+     .then( snapshot => {
+       snapshot.forEach(doc => {
+         console.log(doc.data().name);
+         console.log(doc.data().party);
+         console.log(doc.data().funding);
+         this.setResultModal(true,this.state.name)
         })
-        var db = firebase.database();
-        var targetRef = db.ref("congress").orderByChild('name').equalTo('Alexandria Ocasio-Cortez');
-        console.log(targetRef.name);
-        console.log(targetRef.party);
-        console.log(targetRef.funding);
-        console.log(targetRef);
-        this.pic = result["uri"];
-        return result;
-      }});
-    }
-  };
+     }); 
+     };
+
+   }
+  
+
+  /*
+    console.log('DEV_MSG: picture taken');
+    var pic = this.camera.takePictureAsync({base64: true}).then( (result) => {
+      console.log(pic.base64); 
+      a = new FacePlusPlusApi(); 
+      targetName =  a.upload(ImageCompressor.compressImage(pic.uri).base64)})
+      .then( (name) => {
+        //console.log(name); 
+        this.setState({
+          name: name
+        }) 
+      })
+    }};
+
+*/
+    
+
+  
 
 
  //what the application is displaying
@@ -117,9 +168,10 @@ export default class HomeScreen extends React.Component {
     else {
       return (
         <View style={{flex: 1}}>
-          <Camera 
+          <Camera
            style={{flex: 1}} 
            type={this.state.type}
+           ratio="1:1"
            onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
            onFaceDetectionError = {this.handleFaceDetectionErorr}
            faceDetectorSettings = {{
@@ -131,7 +183,50 @@ export default class HomeScreen extends React.Component {
              this.camera = ref;
            }}>
 
+        {/* Modal for returned back-end info */}
         <View style= {styles.viewContainer}>
+           <Modal
+            animationType="slide"
+            transparent={true}
+            visible={this.state.resultModalVisible}
+            onRequestClose={()=>{
+              Alert.alert("Modal has been closed.");
+            }}>
+
+            <View style={styles.modalContainer}>
+              <View style={styles.innerModalContainer}>
+                <View style={styles.navBar}>
+                  <TouchableOpacity
+                    onPress={()=>{
+                      this.setResultModal(!this.state.resultModalVisible);
+                    }}>
+
+                    <MaterialCommunityIcons
+                      onPress={()=>{
+                        this.setResultModal(!this.state.resultModalVisible);
+                      }}
+                      name="close-circle-outline"
+                      style={styles.navBarButton}>
+                    </MaterialCommunityIcons>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Information returned from back-end goes here */}
+                <View style={styles.modalContent}>
+                  <Text style={styles.resultTitle}> Name </Text>
+                  <Text style={styles.resultName}> {this.state.name} </Text>
+
+                  <View style={styles.textContainer}>
+                    <Text style={styles.resultTitle}> Funding source </Text>
+                    <Text style={styles.fundingSource}> City University of New York  <Text style={styles.fundingMoney}>               $6,847 </Text> </Text>
+                    <Text style={styles.fundingSource}> Columbia University  <Text style={styles.fundingMoney}>                             $10,867 </Text> </Text>
+                    <Text style={styles.fundingSource}> Justice Democrats <Text style={styles.fundingMoney}>                                     $7,712 </Text> </Text>
+                  </View>
+                </View>
+
+              </View>
+            </View>
+           </Modal>
 
           <Modal
             animationType="slide"
@@ -141,7 +236,7 @@ export default class HomeScreen extends React.Component {
               Alert.alert("Modal has been closed.");
             }}>
 
-            <View style={styles.modalContainer}>            
+            <View style={styles.modalContainer}>
               <View style={styles.innerModalContainer}>
                 <View style={styles.navBar}>
                   <TouchableOpacity
@@ -160,19 +255,7 @@ export default class HomeScreen extends React.Component {
                 </View>
 
                 <View style={styles.modalContent}>  
-                  <Button 
-                    onPress = {()=>{
-                      console.log("a clicked")
-                    }}
-                    title="About application">
-                  </Button>
-            
-                  <Button 
-                    onPress = {()=>{
-                      console.log("b clicked")
-                    }}
-                    title="Tutorial">
-                  </Button>
+                    {/* button for tutorial pages*/}
                 </View>
               </View>
             </View>
@@ -192,14 +275,14 @@ export default class HomeScreen extends React.Component {
               <Text style = {styles.faceDetectedText}>
                 {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
               </Text> 
-              
+
               <MaterialCommunityIcons 
                 onPress={this.takePicture}
                 name="circle-outline"
                 style={styles.takePictureButton}>
-                </MaterialCommunityIcons>
-              </TouchableOpacity>
-            </View>
+              </MaterialCommunityIcons>
+            </TouchableOpacity>
+          </View>
           </Camera>
         </View>
       )
@@ -219,18 +302,17 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    //backgroundColor: "rgba(0,0,0,0.5)",
   },
 
   navBar: {
     flexDirection: 'row',
     height: 70,
-    //backgroundColor: "#1eaaf1",
     borderRadius: 10,
   },
 
   navBarButton: {
-    color: "white",
+    color: "black",
     fontSize: 40,
     marginLeft: 325,
     marginTop: 15,
@@ -238,12 +320,12 @@ const styles = StyleSheet.create({
   },
 
   innerModalContainer: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 10,
-    marginTop: 30,
+    marginTop: 150,
     marginLeft: 15,
     marginRight: 15, 
-    height: '90%',
+    height: '50%',
   },
 
   cameraButtonsContainer: {
@@ -268,9 +350,45 @@ const styles = StyleSheet.create({
     marginBottom: 10, 
     color: 'white'
   },
-  modalContent: {
-    alignItems: 'center',
-    alignSelf: 'center',
-  }
-});
+  
+  fundingSource: {
+    fontSize: 18,
+    //fontFamily: 'lato-reg',
+    paddingLeft: 20,
+    paddingTop: 15,
+    //paddingRight: 30,
+  },
 
+  fundingMoney: {
+    //marginLeft: 30,
+  },
+
+  modalContent: {
+    //alignItems: 'center',
+   // alignSelf: 'center',
+  },
+
+  modalImage: {
+    height: '50%',
+    width: '50%',
+    resizeMode: 'contain',
+  },
+
+  resultName: {
+    fontSize: 25,
+    //fontFamily: 'lato-reg',
+    alignSelf: 'center',
+  },
+
+  resultTitle: {
+    alignSelf: 'center',
+    fontSize: 30,
+    //fontFamily: 'lato-bold',
+    paddingTop: 30,
+  },
+
+  textContainer: {
+    alignItems: 'flex-start',
+  },
+
+});
