@@ -2,6 +2,7 @@
 
 import React, { Component } from 'react';
 import {
+  Button,
   Image,
   Platform,
   ScrollView,
@@ -18,21 +19,16 @@ import { MonoText } from '../components/StyledText';
 
 import { Camera, Permissions } from 'expo';
 import { FaceDetector } from 'expo';
-import { Button } from 'react-native';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
-import CompressImage from '../backend/CompressImage'; 
+import Crowdsource from '../backend/Crowdsource'; 
 import firebase from "firebase"; 
 require("firebase/firestore");
 
 import Database from '../backend/Database'; 
 import ImageCompressor from '../backend/CompressImage';
-
-
-
 
 export default class HomeScreen extends React.Component {
 
@@ -52,6 +48,7 @@ export default class HomeScreen extends React.Component {
     resultModalVisible: false,
     name: "Unknown",
     party: "Unknown",
+    occupation: "Unknown",
     funding: "Unknown",
     image: null, 
   };
@@ -117,43 +114,39 @@ export default class HomeScreen extends React.Component {
        return result; })
      .then( async function(result) {
        console.log('name: '+ result);
-       let congressRef = await db.collection('congress').where("name", "==", result).get();
-       return congressRef;
+       if ( result == 'Unknown') {
+         await Crowdsource.sendUnverified('Tester', 'Testing notes');
+         return 'Unknown';
+       }
+       else {
+          let congressRef = await db.collection('congress').where("name", "==", result).get();
+          return congressRef;
+       }
      })
      .then( snapshot => {
+       if ( snapshot != 'Unknown') {
        snapshot.forEach(doc => {
+         this.setState( {
+           name: doc.data().name,
+           party: doc.data().party,
+           occupation: doc.data().occupation,
+           funding: Object.entries(doc.data().funding),
+         })
          console.log(doc.data().name);
+         console.log(doc.data().occupation);
          console.log(doc.data().party);
          console.log(doc.data().funding);
-         this.setResultModal(true,this.state.name)
-        })
+         this.setResultModal(true,this.state.name);
+        }) 
+      }
+      else {
+        this.setResultModal(true, this.state.name);
+      }
      }); 
      };
 
-   }
-  
+   }    
 
-  /*
-    console.log('DEV_MSG: picture taken');
-    var pic = this.camera.takePictureAsync({base64: true}).then( (result) => {
-      console.log(pic.base64); 
-      a = new FacePlusPlusApi(); 
-      targetName =  a.upload(ImageCompressor.compressImage(pic.uri).base64)})
-      .then( (name) => {
-        //console.log(name); 
-        this.setState({
-          name: name
-        }) 
-      })
-    }};
-
-*/
-    
-
-  
-
-
- //what the application is displaying
   render() {
     const { hasCameraPermission } = this.state;
   
@@ -215,13 +208,17 @@ export default class HomeScreen extends React.Component {
                 <View style={styles.modalContent}>
                   <Text style={styles.resultTitle}> Name </Text>
                   <Text style={styles.resultName}> {this.state.name} </Text>
+                  <Text style={styles.fundingSource}> {this.state.party} </Text>
+                  <Text style={styles.fundingSource}> {this.state.occupation} </Text>
+                  <Text style={styles.fundingSource}> {this.state.funding} </Text>
 
-                  <View style={styles.textContainer}>
+
+                {/*  <View style={styles.textContainer}>
                     <Text style={styles.resultTitle}> Funding source </Text>
                     <Text style={styles.fundingSource}> City University of New York  <Text style={styles.fundingMoney}>               $6,847 </Text> </Text>
                     <Text style={styles.fundingSource}> Columbia University  <Text style={styles.fundingMoney}>                             $10,867 </Text> </Text>
                     <Text style={styles.fundingSource}> Justice Democrats <Text style={styles.fundingMoney}>                                     $7,712 </Text> </Text>
-                  </View>
+                    </View>  */}
                 </View>
 
               </View>
@@ -302,7 +299,7 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     flex: 1,
-    //backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
 
   navBar: {
@@ -353,19 +350,19 @@ const styles = StyleSheet.create({
   
   fundingSource: {
     fontSize: 18,
-    //fontFamily: 'lato-reg',
+    fontFamily: 'lato-reg',
     paddingLeft: 20,
     paddingTop: 15,
-    //paddingRight: 30,
+    paddingRight: 30,
   },
 
   fundingMoney: {
-    //marginLeft: 30,
+    marginLeft: 30,
   },
 
   modalContent: {
-    //alignItems: 'center',
-   // alignSelf: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
 
   modalImage: {
@@ -376,14 +373,14 @@ const styles = StyleSheet.create({
 
   resultName: {
     fontSize: 25,
-    //fontFamily: 'lato-reg',
+    fontFamily: 'lato-reg',
     alignSelf: 'center',
   },
 
   resultTitle: {
     alignSelf: 'center',
     fontSize: 30,
-    //fontFamily: 'lato-bold',
+    fontFamily: 'lato-bold',
     paddingTop: 30,
   },
 
