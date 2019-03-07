@@ -29,6 +29,7 @@ require("firebase/firestore");
 
 import Database from '../backend/Database'; 
 import ImageCompressor from '../backend/CompressImage';
+import Twitter from '../backend/Twitter';
 
 export default class HomeScreen extends React.Component {
 
@@ -49,7 +50,7 @@ export default class HomeScreen extends React.Component {
     name: "Unknown",
     party: "Unknown",
     occupation: "Unknown",
-    funding: "Unknown",
+    funding: [],
     image: null, 
   };
 
@@ -93,10 +94,17 @@ export default class HomeScreen extends React.Component {
 //handles taking the picture & returns Object with URI
   takePicture = () => {
     this.setState({
-      pictureTaken: true,
+      pictureTaken: true,       
     });
 
    if (this.camera) {
+     this.setState({
+      name: "Unknown",
+      party: "Unknown",
+      occupation: "Unknown",
+      funding: [],
+      image: null,
+     });
      console.log('DEV_MSG: picture taken');
      const db = firebase.firestore();
 
@@ -142,7 +150,11 @@ export default class HomeScreen extends React.Component {
       else {
         this.setResultModal(true, this.state.name);
       }
-     }); 
+     })
+     .then( async function() {
+       t = new Twitter();
+       t.getTweets();
+     } ); 
      };
 
    }    
@@ -206,11 +218,17 @@ export default class HomeScreen extends React.Component {
 
                 {/* Information returned from back-end goes here */}
                 <View style={styles.modalContent}>
-                  <Text style={styles.resultTitle}> Name </Text>
-                  <Text style={styles.resultName}> {this.state.name} </Text>
-                  <Text style={styles.fundingSource}> {this.state.party} </Text>
-                  <Text style={styles.fundingSource}> {this.state.occupation} </Text>
-                  <Text style={styles.fundingSource}> {this.state.funding} </Text>
+                  {/*<Text style={styles.resultTitle}> Name </Text>*/}
+                  <Text style={styles.resultTitle}> {this.state.name} </Text>
+                  <Text style={styles.resultName}> {this.state.party} </Text>
+                  <Text style={styles.resultName}> {this.state.occupation} </Text>
+                  <Text style={styles.fundingSource}> 
+                  {this.state.funding.map(
+                    ([source, amount]) =>
+
+                    source + '\t' + amount + '\n' 
+
+                  )} </Text>
 
 
                 {/*  <View style={styles.textContainer}>
@@ -349,11 +367,12 @@ const styles = StyleSheet.create({
   },
   
   fundingSource: {
+    justifyContent: 'space-evenly',
     fontSize: 18,
     fontFamily: 'lato-reg',
-    paddingLeft: 20,
+    paddingLeft: 5,
     paddingTop: 15,
-    paddingRight: 30,
+    paddingRight: 5,
   },
 
   fundingMoney: {
