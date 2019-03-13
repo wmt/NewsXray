@@ -12,10 +12,10 @@ export default class Crowdsource {
 
         const db = firebase.firestore();
 
-        db.collection("unverified").add({
+        /*db.collection("unverified").add({
             name: nameInput,
             notes: notesInput,
-        })
+        })*/
 
 
 

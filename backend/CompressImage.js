@@ -7,7 +7,7 @@ export default class ImageCompressor {
         console.log("DEV_MSG: inside compressImage()")
 
         let imageManip = await ImageManipulator.manipulateAsync(
-            imageURI, [{resize: { width: 100 } } ], { // maximum 
+            imageURI, [{resize: { width: 600 } } ], { // maximum 
               compress : 1.0, 
               format : 'png',
               base64 : true, }

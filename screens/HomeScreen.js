@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
 
 import {Modal, TouchableHighlight, Alert} from 'react-native';
@@ -52,6 +53,8 @@ export default class HomeScreen extends React.Component {
     occupation: "Unknown",
     funding: [],
     image: null, 
+    loading: false,
+    notable: "N/A",
   };
 
   //opens the modal for app information and tutorial
@@ -91,6 +94,19 @@ export default class HomeScreen extends React.Component {
     }
   }
 
+  renderRow() {
+    return (
+        <Text style={{ flex: 1, alignSelf: 'stretch', flexDirection: 'row' }}>
+            <Text style={{ flex: 1, alignSelf: 'stretch' }} /> { /* Edit these as they are your cells. You may even take parameters to display different data / react elements etc. */}
+            <Text style={{ flex: 1, alignSelf: 'stretch' }} />
+            <Text style={{ flex: 1, alignSelf: 'stretch' }} />
+            <Text style={{ flex: 1, alignSelf: 'stretch' }} />
+            <Text style={{ flex: 1, alignSelf: 'stretch' }} />
+        </Text>
+    );
+}
+
+
 //handles taking the picture & returns Object with URI
   takePicture = () => {
     this.setState({
@@ -104,6 +120,7 @@ export default class HomeScreen extends React.Component {
       occupation: "Unknown",
       funding: [],
       image: null,
+      loading: true,
      });
      console.log('DEV_MSG: picture taken');
      const db = firebase.firestore();
@@ -113,17 +130,18 @@ export default class HomeScreen extends React.Component {
        a = new FacePlusPlusApi();
        let pic64 = await ImageCompressor.compressImage(result.uri);
        let targetName = await a.upload(pic64);
-
        return targetName;
+
      }).then( result =>  {
        this.setState({
          name: result,
       });
        return result; })
+
      .then( async function(result) {
        console.log('name: '+ result);
        if ( result == 'Unknown') {
-         await Crowdsource.sendUnverified('Tester', 'Testing notes');
+         //await Crowdsource.sendUnverified('Tester', 'Testing notes');
          return 'Unknown';
        }
        else {
@@ -139,22 +157,31 @@ export default class HomeScreen extends React.Component {
            party: doc.data().party,
            occupation: doc.data().occupation,
            funding: Object.entries(doc.data().funding),
+           notable: doc.data().notable,
          })
          console.log(doc.data().name);
          console.log(doc.data().occupation);
          console.log(doc.data().party);
          console.log(doc.data().funding);
+         console.log(doc.data().notable);
          this.setResultModal(true,this.state.name);
+         this.setState({
+          loading: false
+         });
         }) 
       }
       else {
         this.setResultModal(true, this.state.name);
+        this.setState({
+          loading: false,
+         });
       }
-     })
-     .then( async function() {
+      
+  })
+    /* .then( async function() {
        t = new Twitter();
        t.getTweets();
-     } ); 
+     } );  */
      };
 
    }    
@@ -188,8 +215,11 @@ export default class HomeScreen extends React.Component {
              this.camera = ref;
            }}>
 
+
+
         {/* Modal for returned back-end info */}
         <View style= {styles.viewContainer}>
+        
            <Modal
             animationType="slide"
             transparent={true}
@@ -220,23 +250,18 @@ export default class HomeScreen extends React.Component {
                 <View style={styles.modalContent}>
                   {/*<Text style={styles.resultTitle}> Name </Text>*/}
                   <Text style={styles.resultTitle}> {this.state.name} </Text>
-                  <Text style={styles.resultName}> {this.state.party} </Text>
-                  <Text style={styles.resultName}> {this.state.occupation} </Text>
+                  <Text style={styles.resultName}> Party: {this.state.party} </Text>
+                  <Text style={styles.resultName}> Occupation: {this.state.occupation} </Text>
+                  <Text style={styles.resultName}> Notable: {this.state.notable}</Text>
+                  <Text style={styles.resultTitle}> Funding </Text>
                   <Text style={styles.fundingSource}> 
                   {this.state.funding.map(
-                    ([source, amount]) =>
+                    ([source,amount]) => //[source, amount]) =>
 
+                    //this.renderRow()
                     source + '\t' + amount + '\n' 
 
                   )} </Text>
-
-
-                {/*  <View style={styles.textContainer}>
-                    <Text style={styles.resultTitle}> Funding source </Text>
-                    <Text style={styles.fundingSource}> City University of New York  <Text style={styles.fundingMoney}>               $6,847 </Text> </Text>
-                    <Text style={styles.fundingSource}> Columbia University  <Text style={styles.fundingMoney}>                             $10,867 </Text> </Text>
-                    <Text style={styles.fundingSource}> Justice Democrats <Text style={styles.fundingMoney}>                                     $7,712 </Text> </Text>
-                    </View>  */}
                 </View>
 
               </View>
@@ -276,6 +301,7 @@ export default class HomeScreen extends React.Component {
             </View>
           </Modal>
 
+
             <TouchableOpacity
               onPress={()=>{
                 this.setModalVisible(true);
@@ -283,6 +309,9 @@ export default class HomeScreen extends React.Component {
               <Image source = {require('../assets/images/NewsXRayLogo.png')}></Image> 
             </TouchableOpacity>
 
+            <View style={[styles.modalContent]}>
+            <ActivityIndicator size="large" color="#0000ff" animating={this.state.loading} />
+            </View>
         </View>
 
           <View style={styles.cameraButtonsContainer}>
@@ -391,7 +420,7 @@ const styles = StyleSheet.create({
   },
 
   resultName: {
-    fontSize: 25,
+    fontSize: 16,
     fontFamily: 'lato-reg',
     alignSelf: 'center',
   },
@@ -406,5 +435,15 @@ const styles = StyleSheet.create({
   textContainer: {
     alignItems: 'flex-start',
   },
+
+  container: {
+    flex: 2,
+    justifyContent: 'center'
+  },
+  horizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10
+  }
 
 });
