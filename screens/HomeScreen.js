@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import {Modal, TouchableHighlight, Alert} from 'react-native';
+import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 
 import { WebBrowser } from 'expo';
 import { MonoText } from '../components/StyledText';
@@ -41,6 +42,7 @@ export default class HomeScreen extends React.Component {
     header: null,
   };
 
+
   
   //Camera and Face Detector configurations
   state = {
@@ -53,10 +55,14 @@ export default class HomeScreen extends React.Component {
     resultModalVisible: false,
     name: "Unknown",
     party: "Unknown",
-    funding: "Unknown",
+    funding: [],
     image: null,
     notable: "N/A",
     loading: false, 
+    tableHead: ['Funding Source', 'Amount'],
+    amount: [],
+    widthArr: [220, 130]
+
   };
 
   //opens the modal for app information and tutorial
@@ -95,6 +101,9 @@ export default class HomeScreen extends React.Component {
       })
     }
   }
+
+
+  
 
 //handles taking the picture & returns Object with URI
 takePicture = () => {
@@ -233,15 +242,45 @@ takePicture = () => {
                 <ScrollView
                   showVerticalScrollIndicator={true} 
                   contentContainerStyle={styles.modalContent}>
-                  {/* <Image style={{width: "50%", height: "100%", alignSelf: 'center', borderRadius: 3, borderColor: 'black', borderWidth: 5}}source={require('../assets/images/aoc.png')} /> */}
-                  <Text style={styles.resultTitle}> Name </Text>
-                  <Text style={styles.resultName}> {this.state.name} </Text>
-                  <Text style={styles.resultTitle}> Occupation </Text>
+                  <View style={{flex: 1, flexDirection: 'row'}}>
+                  <View style={{width: 170, height: 200}}>
+                  <Image style={styles.resultImage} source={require('../assets/images/robot-dev.png')}></Image>
+                  </View>
+                  <View style={{width: 220, height: 200}}>
+                  <Text style={styles.resultNamePerson}> {this.state.name} </Text>
+                  <Text style={styles.resultTitle}> Occupation: </Text>
                   <Text style={styles.resultName}> {this.state.occupation} </Text>
-                  <Text style={styles.resultTitle}> Party </Text>
+                  <Text style={styles.resultTitle}> Party: </Text>
                   <Text style={styles.resultName}> {this.state.party} </Text>
+                  </View>
+                  </View>
+                  {/* <Image style={{width: "50%", height: "100%", alignSelf: 'center', borderRadius: 3, borderColor: 'black', borderWidth: 5}}source={require('../assets/images/aoc.png')} /> */}
+                  <Text style={styles.resultTitle}>Notable Information:</Text>
                   <Text style={styles.resultName}> {this.state.notable} </Text>
-                  {/* <Text style={styles.fundingSource}> {this.state.funding} </Text> */}
+
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'center'}}>
+
+                    <View style={{width: 350, height: 200, marginTop: 20}}>
+                    <Table borderStyle={{borderColor: '#707070'}}>
+                    <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
+                  </Table>
+                  <Table borderStyle={{borderColor: '#707070'}}>
+                    {
+                      this.state.funding.map(
+                        ([source, amount]) => (
+                        <Row
+                        widthArr={this.state.widthArr}
+                        style={styles.tableData}
+                        textStyle={styles.tableText}
+                        data={[source,amount]}
+                        ></Row>
+                      ))
+                    }
+                  </Table>                  
+                    </View>
+                  </View>
 
                   <View style={styles.textContainer}>
                       
@@ -402,9 +441,31 @@ const styles = StyleSheet.create({
   fundingSource: {
     fontSize: 18,
     //fontFamily: 'lato-reg',
-    paddingLeft: 20,
+    alignItems: 'center',
     paddingTop: 15,
     //paddingRight: 30,
+  },
+
+  //also new!
+  tableHeader: {
+    height: 50,
+    backgroundColor: '#5B7FB1',
+  },
+
+  tableData: {
+    height: 25,
+    backgroundColor: 'white',
+  },
+
+  tableHeaderText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: 'white'
+    
+  },
+
+  tableText: {
+    textAlign: 'center'
   },
 
   fundingMoney: {
@@ -424,16 +485,33 @@ const styles = StyleSheet.create({
   },
 
   resultName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'lato-reg',
-    alignSelf: 'center',
+    marginLeft: 5
   },
 
   resultTitle: {
-    alignSelf: 'center',
-    fontSize: 25,
+    marginLeft: 5,
+    fontSize: 20,
     fontFamily: 'lato-bold',
-    paddingTop: 30,
+    paddingTop: 10,
+  },
+
+  resultNamePerson: {
+    marginLeft: 5,
+    fontSize: 20,
+    fontFamily: 'lato-bold',
+    paddingTop: 10,
+    color: '#5B7FB1'
+  },
+
+  //new I added
+  resultImage: {
+    padding: 15,
+    marginLeft: 10,
+    borderRadius: 10,
+    width: 150,
+    height: 200
   },
 
   textContainer: {
@@ -445,6 +523,15 @@ const styles = StyleSheet.create({
     fontFamily: 'slabo-reg',
     fontSize: 35,
     fontWeight: 'bold'
+  },
+
+  fundingSource: {
+    justifyContent: 'space-evenly',
+    fontSize: 18,
+    fontFamily: 'lato-reg',
+    paddingLeft: 5,
+    paddingTop: 15,
+    paddingRight: 5,
   },
 
   aboutText: {
