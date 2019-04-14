@@ -10,7 +10,10 @@ import {
   View,
 } from 'react-native';
 
-import {Modal, TouchableHighlight, Alert} from 'react-native';
+
+import { Divider } from 'react-native-elements';
+
+import {Modal, TouchableHighlight, TextInput, KeyboardAvoidingView, Alert} from 'react-native';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 
 import { WebBrowser } from 'expo';
@@ -53,6 +56,7 @@ export default class HomeScreen extends React.Component {
     pictureTaken: false,
     modalVisible: false,
     resultModalVisible: false,
+    resultUnknownVisible: false, 
     name: "Unknown",
     party: "Unknown",
     funding: [],
@@ -76,6 +80,12 @@ export default class HomeScreen extends React.Component {
       resultModalVisible: visible,
       name: returnedName
     });
+  }
+
+  setUnknownModal(visible) {
+    this.setState({
+      resultUnknownVisible: visible
+    })
   }
 
   async componentDidMount(){
@@ -169,10 +179,10 @@ takePicture = () => {
       }) 
     }
     else {
-      this.setResultModal(true, this.state.name);
+      this.setUnknownModal(true);
       this.setState({
         loading: false,
-      });
+       });
     }
    }); 
    };
@@ -232,7 +242,7 @@ takePicture = () => {
                       onPress={()=>{
                         this.setResultModal(!this.state.resultModalVisible);
                       }}
-                      name="close-circle-outline"
+                      name="close"
                       style={styles.navBarButton}>
                     </MaterialCommunityIcons>
                   </TouchableOpacity>
@@ -243,49 +253,56 @@ takePicture = () => {
                   showVerticalScrollIndicator={true} 
                   contentContainerStyle={styles.modalContent}>
                   <View style={{flex: 1, flexDirection: 'row'}}>
-                  <View style={{width: 170, height: 200}}>
-                  <Image style={styles.resultImage} source={require('../assets/images/robot-dev.png')}></Image>
+                    <View style={{width: '50%', height: '100%'}}>
+                      <Image style={styles.resultImage} source={require('../assets/images/robot-dev.png')}></Image>
+                    </View>
+
+                    <View style={{width: '50%', height: '100%'}}>
+                      <Text style={styles.resultNamePerson}> {this.state.name} </Text>
+                      <Divider style={{backgroundColor: 'black', marginRight: 10}} />
+
+                      <Text style={styles.resultTitle}> Occupation </Text>
+                      <View style={{backgroundColor: 'rgba(91,127,177, 0.1)', borderRadius: 10, marginRight: 15, paddingTop: 5, borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1}}>
+                        <Text style={styles.resultName}> {this.state.occupation} </Text>
+                      </View>
+
+                      <Text style={styles.resultTitle}> Party </Text>
+                      <View style={{backgroundColor: 'rgba(91,127,177, 0.1)', borderRadius: 10, marginRight: 15, paddingTop: 5, borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1}}>
+                        <Text style={styles.resultName}> {this.state.party} </Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={{width: 220, height: 200}}>
-                  <Text style={styles.resultNamePerson}> {this.state.name} </Text>
-                  <Text style={styles.resultTitle}> Occupation: </Text>
-                  <Text style={styles.resultName}> {this.state.occupation} </Text>
-                  <Text style={styles.resultTitle}> Party: </Text>
-                  <Text style={styles.resultName}> {this.state.party} </Text>
+
+                  <Text style={styles.notableTitle}>Notable Information</Text>
+                  <View style={{backgroundColor: 'rgba(91,127,177, 0.1)', borderRadius: 10, paddingTop: 5, marginLeft: 15, marginRight: 15, borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1}}>
+                    <Text style={styles.resultName}> {this.state.notable} </Text>
                   </View>
-                  </View>
-                  {/* <Image style={{width: "50%", height: "100%", alignSelf: 'center', borderRadius: 3, borderColor: 'black', borderWidth: 5}}source={require('../assets/images/aoc.png')} /> */}
-                  <Text style={styles.resultTitle}>Notable Information:</Text>
-                  <Text style={styles.resultName}> {this.state.notable} </Text>
 
                   <View style={{
                     flexDirection: 'row',
                     justifyContent: 'center'}}>
 
                     <View style={{width: 350, height: 200, marginTop: 20}}>
-                    <Table borderStyle={{borderColor: '#707070'}}>
-                    <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
-                  </Table>
-                  <Table borderStyle={{borderColor: '#707070'}}>
-                    {
-                      this.state.funding.map(
-                        ([source, amount]) => (
-                        <Row
-                        widthArr={this.state.widthArr}
-                        style={styles.tableData}
-                        textStyle={styles.tableText}
-                        data={[source,amount]}
-                        ></Row>
-                      ))
-                    }
-                  </Table>                  
-                    </View>
-                  </View>
+                      <Table borderStyle={{borderColor: '#707070'}}>
+                        <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
+                      </Table>
 
-                  <View style={styles.textContainer}>
-                      
-                  </View>
-                  
+                      <Table borderStyle={{borderColor: '#707070'}}>
+                        {
+                          this.state.funding.map(
+                            ([source, amount], i) => (
+                            <Row
+                              key = {i}
+                              widthArr={this.state.widthArr}
+                              style={styles.tableData}
+                              textStyle={styles.tableText}
+                              data={[source,amount]}>
+                            </Row>
+                          ))
+                        }
+                      </Table>                  
+                    </View>
+                  </View>                  
                 </ScrollView>
 
               </View>
@@ -311,7 +328,7 @@ takePicture = () => {
                     onPress={()=>{
                       this.setModalVisible(!this.state.modalVisible);
                     }}
-                    name="close-circle-outline"
+                    name="close"
                     style={styles.navBarButton}>
                   </MaterialCommunityIcons>
                 </TouchableOpacity>
@@ -322,9 +339,58 @@ takePicture = () => {
                     {/* logo for application would go here */}
                     {/* <Text style={styles.aboutTitle}> About News X-Ray </Text> */}
                     <Image style={{width: "50%", height: "50%", alignSelf: 'center'}}source={require('../assets/images/logo.png')} />
-                    <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.  
-                    </Text>
+                    <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.  </Text>
                     <Text style={styles.aboutLine2}>Get transparent facts instantly.</Text>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={this.state.resultUnknownVisible}
+            onRequestClose={()=>{
+              Alert.alert("modal has been closed.");
+            }}>
+          <View style={styles.modalContainer}>
+            <View style={styles.innerModalContainer}>
+              <View style={styles.navBar}>
+                <TouchableOpacity
+                  onPress={()=>{
+                    this.setUnknownModal(!this.state.resultUnknownVisible);
+                  }}>
+
+                <MaterialCommunityIcons
+                  onPress={()=>{
+                    this.setUnknownModal(!this.state.resultUnknownVisible);
+                  }}
+                  name="close"
+                  style={styles.navBarButton}>
+                </MaterialCommunityIcons>
+                </TouchableOpacity>
+              </View>
+                  {/* unknown modal */}
+                  <View style={styles.modalContent}>
+                    <KeyboardAvoidingView style={styles.container} >
+                      <Text style={styles.resultTitle}> Unknown Person </Text>
+                      <Text style={styles.resultName}> We will work on identifying them ASAP. </Text>
+                      <Text style={styles.resultName}> Please input anything you know about them: </Text>
+                      <TextInput
+                        multiline={true}
+                        numberOfLines = {4}
+                        defaultvalue="Name, party, etc."
+                        style={{height: 50, borderColor: 'gray', borderWidth: 1}}
+                        onChangeText={(text) => this.setState({text})}
+                        value={this.state.text}
+                        />
+                      <Button
+                        onPress={() => {this.setUnknownModal(false)}}
+                        title="Submit"
+                        color="blue"
+                        accessibilityLabel="Learn more about this purple button"
+                      />
+                    </KeyboardAvoidingView>
                 </View>
               </View>
             </View>
@@ -338,7 +404,6 @@ takePicture = () => {
               <Image source = {require('../assets/images/NewsXRayLogo2.png')}></Image> 
             </TouchableOpacity>
 
-            
               <ActivityIndicator size="large" color="#ffffff" animating={this.state.loading} style={{justifyContent: 'center', marginTop: 250,}}/>
           </View>
 
@@ -487,22 +552,33 @@ const styles = StyleSheet.create({
   resultName: {
     fontSize: 18,
     fontFamily: 'lato-reg',
-    marginLeft: 5
+    marginLeft: 15,
+    paddingBottom: 5,
+    textAlign: 'auto',
   },
 
   resultTitle: {
     marginLeft: 5,
-    fontSize: 20,
+    fontSize: 22.5,
     fontFamily: 'lato-bold',
-    paddingTop: 10,
+    paddingTop: 15,
+    paddingBottom: 2,
   },
 
   resultNamePerson: {
     marginLeft: 5,
-    fontSize: 20,
+    fontSize: 25,
     fontFamily: 'lato-bold',
-    paddingTop: 10,
-    color: '#5B7FB1'
+    paddingBottom: 10,
+    color: '#5B7FB1',
+  },
+
+  notableTitle: {
+    marginLeft: 15,
+    fontSize: 22.5,
+    fontFamily: 'lato-bold',
+    paddingTop: 30,
+    paddingBottom: 2,
   },
 
   //new I added
@@ -510,8 +586,11 @@ const styles = StyleSheet.create({
     padding: 15,
     marginLeft: 10,
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.3)',
     width: 150,
-    height: 200
+    height: 200,
+    alignSelf: 'center',
   },
 
   textContainer: {
