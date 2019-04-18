@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -10,18 +12,17 @@ import {
   View,
 } from 'react-native';
 
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-import { Divider } from 'react-native-elements';
+import { Divider, Input, Button } from 'react-native-elements';
 
-import {Modal, TouchableHighlight, TextInput, KeyboardAvoidingView, Alert} from 'react-native';
+// import {Modal, TouchableHighlight, TextInput, KeyboardAvoidingView, Alert} from 'react-native';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 
-import { WebBrowser } from 'expo';
-import { MonoText } from '../components/StyledText';
 
-import { Camera, Permissions } from 'expo';
-import { FaceDetector } from 'expo';
-import { Button } from 'react-native';
+import { Camera, FaceDetector, Permissions } from 'expo';
+// import { FaceDetector } from 'expo';
+
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -34,7 +35,7 @@ require("firebase/firestore");
 import Database from '../backend/Database'; 
 import ImageCompressor from '../backend/CompressImage';
 import Crowdsource from '../backend/Crowdsource'; 
-import Spinner from 'react-native-loading-spinner-overlay';
+
 
 
 
@@ -65,7 +66,10 @@ export default class HomeScreen extends React.Component {
     loading: false, 
     tableHead: ['Funding Source', 'Amount'],
     amount: [],
-    widthArr: [220, 130]
+    widthArr: [220, 130],
+    yes: false,
+    no: false,
+    didSubmit: false,
 
   };
 
@@ -188,6 +192,9 @@ takePicture = () => {
    };
 
  }  
+
+
+ 
   
 
  //what the application is displaying
@@ -370,28 +377,119 @@ takePicture = () => {
                 </MaterialCommunityIcons>
                 </TouchableOpacity>
               </View>
+
                   {/* unknown modal */}
-                  <View style={styles.modalContent}>
-                    <KeyboardAvoidingView style={styles.container} >
-                      <Text style={styles.resultTitle}> Unknown Person </Text>
-                      <Text style={styles.resultName}> We will work on identifying them ASAP. </Text>
-                      <Text style={styles.resultName}> Please input anything you know about them: </Text>
-                      <TextInput
-                        multiline={true}
-                        numberOfLines = {4}
-                        defaultvalue="Name, party, etc."
-                        style={{height: 50, borderColor: 'gray', borderWidth: 1}}
-                        onChangeText={(text) => this.setState({text})}
-                        value={this.state.text}
-                        />
-                      <Button
-                        onPress={() => {this.setUnknownModal(false)}}
-                        title="Submit"
-                        color="blue"
-                        accessibilityLabel="Learn more about this purple button"
-                      />
-                    </KeyboardAvoidingView>
-                </View>
+              { this.state.yes === false ?
+                <View style={styles.modalContent}>
+                  <View style={styles.unknownContent}>
+                    <Text style={styles.resultTitle}> Face is not in our database.</Text>
+                    <Text style={styles.resultTitle}> Do you recognize this person? </Text>
+                    
+                    <View style={{flex: 1, flexDirection: 'row'}}>                      
+                      <View style={{width: '50%', height: '100%'}}>
+                        <Button
+                          buttonStyle = {{alignSelf: 'flex-end', width: '65%', backgroundColor: 'rgba(255, 0, 0, 0.7)', marginRight: 5, marginTop: 50}} 
+                          title="No"
+                          onPress={()=>{
+                            this.setState({
+                              no: true,
+                              yes: false,
+                            })
+                            Alert.alert(
+                              'Oops!',
+                              'Our team does not currently have information on this face. Try scanning another face.',
+                              [
+                                {text: 'Okay',
+                                 onPress: ()=>{
+                                   this.setModalVisible(this.state.resultUnknownVisible = false)
+                                   this.setState({no: false})
+                                  }
+                              }
+                              ]
+                            )
+                          }}
+                          />
+                      </View>
+
+                      <View style={{width: '50%', height: '100%'}}>
+                        <Button 
+                          buttonStyle = {{alignSelf: 'flex-start', width: '65%', backgroundColor: 'rgba(0, 128, 0, 0.7)', marginLeft: 5, marginTop: 50}}
+                          title="Yes"
+                          onPress={()=>(this.setState({
+                            yes: true,
+                          }))}
+                          />
+                      </View>
+                    </View>      
+                  </View>
+                 </View> 
+
+                  // if yes -> display input data
+                  : <View style={styles.modalContent}>
+                      <Text style={styles.knownTitle}> Please input what you know about the person. </Text>
+                      <Input
+                        placeholder=" Name"
+                        leftIcon={
+                          <Icon
+                            name='user'
+                            size={24}
+                            color='black'
+                            />
+                        } /> 
+
+                        
+                        <Input
+                          placeholder=" Occupation"
+                          leftIcon={
+                            <Icon
+                              name='briefcase'
+                              size={24}
+                              color='black'
+                              />
+                          } />
+                        
+                        <Input 
+                          placeholder=" Political Affiliation"
+                          leftIcon={
+                            <Icon
+                              name='flag'
+                              size={24}
+                              color='black'
+                              />
+                          } />
+                        
+                        <Input 
+                          placeholder=" Notable information"
+                          leftIcon={
+                            <Icon
+                              name='quote-right'
+                              size={24}
+                              color='black'
+                              />
+                          } />
+                        
+                        <Button
+                          buttonStyle = {{marginTop: 10, alignSelf: 'center', width: '50%'}}
+                          title="Submit"
+                          onPress={()=> {
+                            Alert.alert(
+                              'Success',
+                              'Information has been submitted! Our team will vet the data.',
+                              [
+                                {text: 'Okay',
+                                 onPress: ()=>{
+                                   this.setModalVisible(this.state.resultUnknownVisible=false)
+                                   this.setState({
+                                     yes: false,
+                                   })
+                                  }
+                                }
+                              ]
+                            )
+                          }}
+                          />
+                                                  
+                   </View> }
               </View>
             </View>
           </Modal>
@@ -637,5 +735,25 @@ const styles = StyleSheet.create({
     // backgroundColor: 'pink',
     // alignSelf: 'center',
     // marginRight: 50,
+  },
+
+  unknownContent: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderWidth: 2,
+    borderRadius: 10,
+    marginTop: 10,
+    marginLeft: 5,
+    marginRight: 5,
+    height: '75%'
+  },
+
+  knownTitle: {
+    marginLeft: 5,
+    fontSize: 22.5,
+    fontFamily: 'lato-bold',
+    // paddingTop: 15,
+    paddingBottom: 2,
+    textAlign: 'center',
   }
 });
