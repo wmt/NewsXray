@@ -26,7 +26,7 @@ export default class FacePlusPlusApi {
 
             let jsonDict = await jsonResponse.json();
 
-            if ( jsonDict.hasOwnProperty('error_message') || jsonDict.faces.length == 0 )  {
+            if ( jsonDict.hasOwnProperty('error_message') || jsonDict.faces.length == 0 || jsonDict.results[0].confidence <= 70)  {
 
                 if ( jsonDict.error_message == 'CONCURRENCY_LIMIT REACHED' ) {
                     return 'Server busy!';
