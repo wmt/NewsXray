@@ -8,8 +8,8 @@ export default class FacePlusPlusApi {
 
             let form =  await new FormData();
  
-            form.append('api_key', 'uz651RUhKY9QBGbs5CeesNu_yFxhv8Cu');
-            form.append('api_secret', 'e6JX8i1qA6t99CLuGAUpbBG0osZJ-bOE');
+            form.append('api_key', 'sKUgqY-L4It4eegMbUkzrv5M5HCvJ7qk');
+            form.append('api_secret', 'XLiKoeCYL1v7iLz0E6ISlE2mUo4m2Kid');
             form.append('image_base64', photo); 
             form.append('outer_id', 'myface_1'); 
       
