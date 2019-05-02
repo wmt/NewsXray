@@ -16,16 +16,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { Divider, Input, Button } from 'react-native-elements';
 
-// import {Modal, TouchableHighlight, TextInput, KeyboardAvoidingView, Alert} from 'react-native';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 
-
 import { Camera, FaceDetector, Permissions } from 'expo';
-// import { FaceDetector } from 'expo';
-
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
 
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
 import CompressImage from '../backend/CompressImage'; 
@@ -35,9 +30,6 @@ require("firebase/firestore");
 import Database from '../backend/Database'; 
 import ImageCompressor from '../backend/CompressImage';
 import Crowdsource from '../backend/Crowdsource'; 
-
-
-
 
 
 export default class HomeScreen extends React.Component {
@@ -56,8 +48,6 @@ export default class HomeScreen extends React.Component {
     faceDetected: false,
     pictureTaken: false,
     modalVisible: false,
-    resultModalVisible: false,
-    resultUnknownVisible: false, 
     name: "Unknown",
     party: "Unknown",
     funding: [],
@@ -70,7 +60,6 @@ export default class HomeScreen extends React.Component {
     yes: false,
     no: false,
     didSubmit: false,
-
   };
 
   //opens the modal for app information and tutorial
@@ -130,19 +119,18 @@ takePicture = () => {
     name: "Unknown",
     party: "Unknown",
     occupation: "Unknown",
+    notable: "N/A", 
     funding: [],
     image: null,
     loading: true,
    });
-   console.log('DEV_MSG: picture taken');
+   //console.log('DEV_MSG: picture taken');
    const db = firebase.firestore();
-
    this.camera.takePictureAsync( { base64: true } )
    .then( async function(result) {
      a = new FacePlusPlusApi();
      let pic64 = await ImageCompressor.compressImage(result.uri);
      let targetName = await a.upload(pic64);
-
      return targetName;
    }).then( result =>  {
      this.setState({
@@ -150,13 +138,13 @@ takePicture = () => {
     });
      return result; })
    .then( async function(result) {
-     console.log('name: '+ result);
+     //console.log('name: '+ result);
      if ( result == 'Unknown') 
      { // text input goes here 
-      //  await Crowdsource.sendUnverified('Tester', 'Testing notes');
        return 'Unknown';
      }
      else {
+       //console.log('getting data'); 
         let congressRef = await db.collection('congress').where("name", "==", result).get();
         return congressRef;
      }
@@ -170,12 +158,7 @@ takePicture = () => {
          occupation: doc.data().occupation,
          funding: Object.entries(doc.data().funding),
          notable: doc.data().notable,
-       })
-       console.log(doc.data().name);
-       console.log(doc.data().occupation);
-       console.log(doc.data().party);
-       console.log(doc.data().funding);
-       console.log(doc.data().notable)
+       }); 
        this.setResultModal(true,this.state.name);
        this.setState({
          loading: false,
@@ -429,17 +412,20 @@ takePicture = () => {
                       <Text style={styles.knownTitle}> Please input what you know about the person. </Text>
                       <Input
                         placeholder=" Name"
+                        onChangeText = { (text) => this.setState({name: text}) }
                         leftIcon={
                           <Icon
                             name='user'
                             size={24}
                             color='black'
                             />
-                        } /> 
+                        } 
+                         /> 
 
                         
                         <Input
                           placeholder=" Occupation"
+                          onChangeText = { (text) => this.setState({occupation: text}) }
                           leftIcon={
                             <Icon
                               name='briefcase'
@@ -450,6 +436,7 @@ takePicture = () => {
                         
                         <Input 
                           placeholder=" Political Affiliation"
+                          onChangeText = { (text) => this.setState({party: text}) }
                           leftIcon={
                             <Icon
                               name='flag'
@@ -460,6 +447,7 @@ takePicture = () => {
                         
                         <Input 
                           placeholder=" Notable information"
+                          onChangeText = { (text) => this.setState({notable: text}) }
                           leftIcon={
                             <Icon
                               name='quote-right'
@@ -478,10 +466,8 @@ takePicture = () => {
                               [
                                 {text: 'Okay',
                                  onPress: ()=>{
+                                   Crowdsource.sendUnverified(this.state.name, this.state.party, this.state.occupation, this.state.notable);
                                    this.setModalVisible(this.state.resultUnknownVisible=false)
-                                   this.setState({
-                                     yes: false,
-                                   })
                                   }
                                 }
                               ]
@@ -679,7 +665,6 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
 
-  //new I added
   resultImage: {
     padding: 15,
     marginLeft: 10,
