@@ -6,4 +6,5 @@ import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-ta
 run in project folder:
 npm install react-native-table-component
 npm install react-native-elements
+npm i --save lottie-react-native
 
