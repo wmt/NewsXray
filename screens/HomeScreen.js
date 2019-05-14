@@ -14,19 +14,15 @@ import {
 
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-import { Divider, Input, Button } from 'react-native-elements';
+import { Divider, Input, Button, Card } from 'react-native-elements';
 
 // import {Modal, TouchableHighlight, TextInput, KeyboardAvoidingView, Alert} from 'react-native';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
-
+import LottieView from 'lottie-react-native';
 
 import { Camera, FaceDetector, Permissions } from 'expo';
 // import { FaceDetector } from 'expo';
-
-
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
-
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
 import CompressImage from '../backend/CompressImage'; 
 import firebase from "firebase"; 
@@ -38,7 +34,7 @@ import Crowdsource from '../backend/Crowdsource';
 
 
 
-
+var loadingText = ['Composing face', 'Predicting the political climate','Detecting the invisible hand', 'Reading facial expressions', 'Searching for lizard people', 'Just Google it', 'Not all faces are what they appear']
 
 export default class HomeScreen extends React.Component {
 
@@ -66,10 +62,11 @@ export default class HomeScreen extends React.Component {
     loading: false, 
     tableHead: ['Funding Source', 'Amount'],
     amount: [],
-    widthArr: [220, 130],
+    widthArr: ['62%', '38%'],
     yes: false,
     no: false,
     didSubmit: false,
+    scannedFace: null,
 
   };
 
@@ -96,6 +93,11 @@ export default class HomeScreen extends React.Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted"});
     if (!firebase.apps.length) { firebase.initializeApp(Database.FirebaseConfig)};
+    
+    intervalID = setInterval(()=>{
+      this.setState({loadingIndex: Math.floor(Math.random()*(loadingText.length)+1)})
+    }, 1500);
+  
   }
 
   //switches the boolean values, essentially controls
@@ -116,6 +118,10 @@ export default class HomeScreen extends React.Component {
     }
   }
 
+componentWillUnmount() {
+  this._isMounted = false;
+  clearInterval(intervalID);
+}
 
   
 
@@ -133,6 +139,7 @@ takePicture = () => {
     funding: [],
     image: null,
     loading: true,
+    loadingIndex: 0,
    });
    console.log('DEV_MSG: picture taken');
    const db = firebase.firestore();
@@ -200,6 +207,7 @@ takePicture = () => {
  //what the application is displaying
   render() {
     const { hasCameraPermission } = this.state;
+
   
     if (hasCameraPermission === null)
     {
@@ -239,21 +247,23 @@ takePicture = () => {
 
             <View style={styles.modalContainer}>
               <View style={styles.infoInnerModalContainer}>
-                <View style={styles.navBar}>
-                  <TouchableOpacity
-                    onPress={()=>{
-                      this.setResultModal(!this.state.resultModalVisible);
-                    }}>
-
-                    <MaterialCommunityIcons
+                {/* <View style={styles.navBar}> */}
+                  {/* <View style={{width: '50%', height: '50%'}}> */}
+                    <TouchableOpacity
                       onPress={()=>{
                         this.setResultModal(!this.state.resultModalVisible);
-                      }}
-                      name="close"
-                      style={styles.navBarButton}>
-                    </MaterialCommunityIcons>
-                  </TouchableOpacity>
-                </View>
+                      }}>
+
+                      <MaterialCommunityIcons
+                        onPress={()=>{
+                          this.setResultModal(!this.state.resultModalVisible);
+                        }}
+                        name="close-circle"
+                        style={styles.navBarButton}>
+                      </MaterialCommunityIcons>
+                    </TouchableOpacity>
+                  {/* </View> */}
+                {/* </View> */}
 
                 {/* Information returned from back-end goes here */}
                 <ScrollView
@@ -286,10 +296,11 @@ takePicture = () => {
                   </View>
 
                   <View style={{
+                    flex: 1,
                     flexDirection: 'row',
-                    justifyContent: 'center'}}>
+                    backgroundColor: "purple",}}>
 
-                    <View style={{width: 350, height: 200, marginTop: 20}}>
+                    <View style={{width: '100%', height: '100%', marginTop: 20, alignSelf: 'flex-end'}}>
                       <Table borderStyle={{borderColor: '#707070'}}>
                         <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
                       </Table>
@@ -335,7 +346,7 @@ takePicture = () => {
                     onPress={()=>{
                       this.setModalVisible(!this.state.modalVisible);
                     }}
-                    name="close"
+                    name="close-circle"
                     style={styles.navBarButton}>
                   </MaterialCommunityIcons>
                 </TouchableOpacity>
@@ -345,9 +356,12 @@ takePicture = () => {
                     {/* button for tutorial pages*/}
                     {/* logo for application would go here */}
                     {/* <Text style={styles.aboutTitle}> About News X-Ray </Text> */}
+                    <View style={styles.unknownContent}>
                     <Image style={{width: "50%", height: "50%", alignSelf: 'center'}}source={require('../assets/images/logo.png')} />
                     <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.  </Text>
+                    {/* <Divider style={{ backgroundColor: 'blue', height: 10 }} /> */}
                     <Text style={styles.aboutLine2}>Get transparent facts instantly.</Text>
+                    </View>
                 </View>
               </View>
             </View>
@@ -362,7 +376,7 @@ takePicture = () => {
             }}>
           <View style={styles.modalContainer}>
             <View style={styles.innerModalContainer}>
-              <View style={styles.navBar}>
+              {/* <View style={styles.navBar}> */}
                 <TouchableOpacity
                   onPress={()=>{
                     this.setUnknownModal(!this.state.resultUnknownVisible);
@@ -371,24 +385,29 @@ takePicture = () => {
                 <MaterialCommunityIcons
                   onPress={()=>{
                     this.setUnknownModal(!this.state.resultUnknownVisible);
+                    if (this.state.yes == true)
+                    {
+                      this.setState({yes: false});
+                    }
                   }}
-                  name="close"
+                  name="close-circle"
                   style={styles.navBarButton}>
                 </MaterialCommunityIcons>
                 </TouchableOpacity>
-              </View>
+              {/* </View> */}
 
                   {/* unknown modal */}
               { this.state.yes === false ?
                 <View style={styles.modalContent}>
                   <View style={styles.unknownContent}>
+                    <Image style={{height: '50%', width: '100%'}} source={require('../assets/images/question.png')} />
                     <Text style={styles.resultTitle}> Face is not in our database.</Text>
                     <Text style={styles.resultTitle}> Do you recognize this person? </Text>
-                    
+              
                     <View style={{flex: 1, flexDirection: 'row'}}>                      
                       <View style={{width: '50%', height: '100%'}}>
                         <Button
-                          buttonStyle = {{alignSelf: 'flex-end', width: '65%', backgroundColor: 'rgba(255, 0, 0, 0.7)', marginRight: 5, marginTop: 50}} 
+                          buttonStyle = {{alignSelf: 'flex-end', width: '65%', backgroundColor: 'rgba(255, 0, 0, 0.7)', marginRight: 5, marginTop: 10}} 
                           title="No"
                           onPress={()=>{
                             this.setState({
@@ -413,7 +432,7 @@ takePicture = () => {
 
                       <View style={{width: '50%', height: '100%'}}>
                         <Button 
-                          buttonStyle = {{alignSelf: 'flex-start', width: '65%', backgroundColor: 'rgba(0, 128, 0, 0.7)', marginLeft: 5, marginTop: 50}}
+                          buttonStyle = {{alignSelf: 'flex-start', width: '65%', backgroundColor: 'rgba(0, 128, 0, 0.7)', marginLeft: 5, marginTop: 10}}
                           title="Yes"
                           onPress={()=>(this.setState({
                             yes: true,
@@ -469,7 +488,7 @@ takePicture = () => {
                           } />
                         
                         <Button
-                          buttonStyle = {{marginTop: 10, alignSelf: 'center', width: '50%'}}
+                          buttonStyle = {{marginTop: 20, alignSelf: 'center', width: '50%'}}
                           title="Submit"
                           onPress={()=> {
                             Alert.alert(
@@ -502,7 +521,17 @@ takePicture = () => {
               <Image source = {require('../assets/images/NewsXRayLogo2.png')}></Image> 
             </TouchableOpacity>
 
-              <ActivityIndicator size="large" color="#ffffff" animating={this.state.loading} style={{justifyContent: 'center', marginTop: 250,}}/>
+            {this.state.loading === true ? 
+                <View style={loading_style.container}>
+                  <LottieView
+                    style={loading_style.animationContainer}
+                    source={require('../assets/images/scanning2.json')}
+                    autoPlay={true}
+                    loop={true}
+                    />
+                  <Text style={{fontSize: 20, textAlign: 'center', color: 'white', fontFamily:'lato-reg', marginRight: '5%'}}> {loadingText[this.state.loadingIndex]} </Text>
+                </View> : null}
+
           </View>
 
         </View>
@@ -545,15 +574,18 @@ const styles = StyleSheet.create({
   },
 
   navBar: {
+    flex: 1,
     flexDirection: 'row',
-    height: 70,
-    borderRadius: 10,
+    // backgroundColor: 'purple',
+    // marginBottom: '15%'
   },
 
   navBarButton: {
     color: "black",
-    fontSize: 40,
-    marginLeft: 325,
+    fontSize: 30,
+    alignSelf: 'flex-end',
+    // marginBottom: '10%',
+    marginLeft: '50%',
     marginTop: 15,
     marginRight: 5,
   },
@@ -603,10 +635,8 @@ const styles = StyleSheet.create({
   
   fundingSource: {
     fontSize: 18,
-    //fontFamily: 'lato-reg',
     alignItems: 'center',
     paddingTop: 15,
-    //paddingRight: 30,
   },
 
   //also new!
@@ -631,13 +661,10 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
 
-  fundingMoney: {
-    //marginLeft: 30,
-  },
-
   modalContent: {
     //alignItems: 'center',
    // alignSelf: 'center',
+  //  height: '75%'
 
   },
 
@@ -739,13 +766,14 @@ const styles = StyleSheet.create({
 
   unknownContent: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderWidth: 2,
+    backgroundColor: 'rgb(255, 255, 255)',
+    // borderWidth: 2,
     borderRadius: 10,
     marginTop: 10,
-    marginLeft: 5,
+    marginLeft: 10,
     marginRight: 5,
-    height: '75%'
+    height: '88%',
+    width: '95%'
   },
 
   knownTitle: {
@@ -757,3 +785,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   }
 });
+
+const loading_style = StyleSheet.create({
+  container: {
+    // backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    height: '100%',
+    width: '100%',
+  },
+
+  animationContainer: {
+    alignItems: 'center',
+    width: '50%',
+    height: '50%',
+    marginTop: '20%',
+    marginRight: '10%'
+  }
+})
