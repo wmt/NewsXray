@@ -1,18 +1,27 @@
-Current database:
+# Current Database
+Josh Holmes 
 
+Jen Psaki
+Kaitlan Collins
 
-6ccd63648702b20a58320337605638a4,Josh Holmes
-80d99d4ced0b5d8a6bb3b91b3eea8f29,Jen Psaki
-360ca8b927543b0393dcc9276c9b174e,Kaitlan Collins
-e15152ebd89b22aaa39a4b758b390731,Symone Sanders
-7b01de923eaa16d116ec127906d89791,Nan Hayworth
-875d5931f16b992a5b171ad65dceb77c,Deirdre Bolton
-f444d8e3ee44c9b367b9b746556dde05,Jessica Tarlov
-6226ea6b5fb5874d677f37825a48c0a2,Donald Trump
-785b8bbf1349632a24dd0640642f4632,Barack Obama
-a732a66a73f8561709fc3535d1b7eb1f,Hillary Clinton
-551c9de9f10f1f164e45151d138fcc06,Mike Pence
-8ed790a3d4280567f2790cfd307e4a0a,Melania Trump
+Symone Sanders
+
+Nan Hayworth
+
+Deirdre Bolton
+
+Jessica Tarlov
+
+Donald Trump
+
+,Barack Obama
+
+,Hillary Clinton
+
+,Mike Pence
+
+,Melania Trump
+
 9a1a4cf16d2a68bccc7e3c9d53d8426c,Michelle Obama
 9aaf1c9a54aa11f525bf81568c7c4537,Joe Biden
 Robert Mueller
