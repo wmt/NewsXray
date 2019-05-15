@@ -1,6 +1,6 @@
 Current database:
 
-FaceSet Token, UserID(Name)
+
 6ccd63648702b20a58320337605638a4,Josh Holmes
 80d99d4ced0b5d8a6bb3b91b3eea8f29,Jen Psaki
 360ca8b927543b0393dcc9276c9b174e,Kaitlan Collins
