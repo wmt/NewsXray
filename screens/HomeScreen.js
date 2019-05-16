@@ -20,7 +20,7 @@ import { Divider, Input, Button, Card } from 'react-native-elements';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 import LottieView from 'lottie-react-native';
 
-import { Camera, FaceDetector, Permissions } from 'expo';
+import { Camera, Permissions } from 'expo';
 // import { FaceDetector } from 'expo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
@@ -226,11 +226,7 @@ takePicture = () => {
            ratio="1:1"
            onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
            onFaceDetectionError = {this.handleFaceDetectionErorr}
-           faceDetectorSettings = {{
-             mode: FaceDetector.Constants.Mode.fast,
-             detectLandmarks: FaceDetector.Constants.Landmarks.all,
-             runClassifications: FaceDetector.Constants.Classifications.none,
-           }}
+
            ref = {ref => {
              this.camera = ref;
            }}>
@@ -537,9 +533,7 @@ takePicture = () => {
         </View>
 
           {/* <View style={styles.cameraButtonsContainer}> */}
-            <Text style = {styles.faceDetectedText}>
-              {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
-            </Text> 
+           
 
             <TouchableOpacity>
               <MaterialCommunityIcons 
