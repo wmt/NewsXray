@@ -62,7 +62,7 @@ export default class HomeScreen extends React.Component {
     loading: false, 
     tableHead: ['Funding Source', 'Amount'],
     amount: [],
-    widthArr: ['62%', '38%'],
+    widthArr: [100, 200],
     yes: false,
     no: false,
     didSubmit: false,
