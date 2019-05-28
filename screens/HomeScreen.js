@@ -20,7 +20,7 @@ import { Divider, Input, Button, Card } from 'react-native-elements';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 import LottieView from 'lottie-react-native';
 
-import { Camera, Permissions } from 'expo';
+import { Camera, FaceDetector, Permissions } from 'expo';
 // import { FaceDetector } from 'expo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
@@ -62,7 +62,7 @@ export default class HomeScreen extends React.Component {
     loading: false, 
     tableHead: ['Funding Source', 'Amount'],
     amount: [],
-    widthArr: ['62%', '38%'],
+    widthArr: [220, 130],
     yes: false,
     no: false,
     didSubmit: false,
@@ -95,7 +95,11 @@ export default class HomeScreen extends React.Component {
     if (!firebase.apps.length) { firebase.initializeApp(Database.FirebaseConfig)};
     
     intervalID = setInterval(()=>{
-      this.setState({loadingIndex: Math.floor(Math.random()*(loadingText.length)+1)})
+      if (this.state.loadingIndex === (loadingText.length - 1))
+      {
+        this.setState({loadingIndex: 0})
+      }
+      this.setState({loadingIndex: this.state.loadingIndex+1})
     }, 1500);
   
   }
@@ -226,7 +230,11 @@ takePicture = () => {
            ratio="1:1"
            onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
            onFaceDetectionError = {this.handleFaceDetectionErorr}
-
+           faceDetectorSettings = {{
+             mode: FaceDetector.Constants.Mode.fast,
+             detectLandmarks: FaceDetector.Constants.Landmarks.all,
+             runClassifications: FaceDetector.Constants.Classifications.none,
+           }}
            ref = {ref => {
              this.camera = ref;
            }}>
@@ -290,33 +298,32 @@ takePicture = () => {
                   <View style={{backgroundColor: 'rgba(91,127,177, 0.1)', borderRadius: 10, paddingTop: 5, marginLeft: 15, marginRight: 15, borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1}}>
                     <Text style={styles.resultName}> {this.state.notable} </Text>
                   </View>
-
                   <View style={{
-                    flex: 1,
                     flexDirection: 'row',
-                    backgroundColor: "purple",}}>
+                    justifyContent: 'center'}}>
 
-                    <View style={{width: '100%', height: '100%', marginTop: 20, alignSelf: 'flex-end'}}>
+                    <View style={{width: 350, height: 200, marginTop: 20}}>
                       <Table borderStyle={{borderColor: '#707070'}}>
                         <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
                       </Table>
 
                       <Table borderStyle={{borderColor: '#707070'}}>
                         {
-                          this.state.funding.map(
-                            ([source, amount], i) => (
-                            <Row
-                              key = {i}
-                              widthArr={this.state.widthArr}
-                              style={styles.tableData}
-                              textStyle={styles.tableText}
-                              data={[source,amount]}>
-                            </Row>
-                          ))
+                        this.state.funding.map(
+                        ([source, amount], i) => (
+                        <Row
+                          key = {i}
+                          widthArr={this.state.widthArr}
+                          style={styles.tableData}
+                          textStyle={styles.tableText}
+                          data={[source,amount]}
+                          ></Row>
+                        ))
                         }
-                      </Table>                  
+                      </Table> 
                     </View>
-                  </View>                  
+                    </View>
+                
                 </ScrollView>
 
               </View>
@@ -493,6 +500,7 @@ takePicture = () => {
                               [
                                 {text: 'Okay',
                                  onPress: ()=>{
+                                   Crowdsource.sendUnverified(this.state.name, this.state.party, this.state.occupation, this.state.notable)
                                    this.setModalVisible(this.state.resultUnknownVisible=false)
                                    this.setState({
                                      yes: false,
@@ -519,13 +527,15 @@ takePicture = () => {
 
             {this.state.loading === true ? 
                 <View style={loading_style.container}>
-                  <LottieView
-                    style={loading_style.animationContainer}
-                    source={require('../assets/images/scanning2.json')}
-                    autoPlay={true}
-                    loop={true}
-                    />
-                  <Text style={{fontSize: 20, textAlign: 'center', color: 'white', fontFamily:'lato-reg', marginRight: '5%'}}> {loadingText[this.state.loadingIndex]} </Text>
+                  <View style={loading_style.animationContainer}>
+                    <LottieView
+                      // style={loading_style.animationContainer}
+                      source={require('../assets/images/scanning2.json')}
+                      autoPlay={true}
+                      loop={true}
+                      />
+                  </View>
+                  <Text style={{fontSize: 20, textAlign: 'center', color: 'white', fontFamily:'lato-reg'}}> {loadingText[this.state.loadingIndex]} </Text>
                 </View> : null}
 
           </View>
@@ -533,7 +543,9 @@ takePicture = () => {
         </View>
 
           {/* <View style={styles.cameraButtonsContainer}> */}
-           
+            <Text style = {styles.faceDetectedText}>
+              {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
+            </Text> 
 
             <TouchableOpacity>
               <MaterialCommunityIcons 
@@ -749,13 +761,9 @@ const styles = StyleSheet.create({
   },
 
   loadingContainer: {
-    // paddingRight: 210,
-    // marginTop: 100,
-    width: 400,
-    // height: 200,
-    // backgroundColor: 'pink',
-    // alignSelf: 'center',
-    // marginRight: 50,
+    width: '100%',
+    // flex: 1,
+    // flexDirection: 'row'
   },
 
   unknownContent: {
@@ -783,15 +791,15 @@ const styles = StyleSheet.create({
 const loading_style = StyleSheet.create({
   container: {
     // backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    // backgroundColor: 'purple',
+    justifyContent: 'center',
     height: '100%',
-    width: '100%',
   },
 
   animationContainer: {
-    alignItems: 'center',
+    // backgroundColor: 'pink',
+    alignSelf: 'center',
     width: '50%',
     height: '50%',
-    marginTop: '20%',
-    marginRight: '10%'
   }
 })
