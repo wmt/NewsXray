@@ -11,7 +11,7 @@ Ted Cruz
 Andrew Cuomo
 John Delaney
 Sean Hannity
-Nan Hayworth 
+Nan Hayworth
 Jared Kushner
 Rush Limbaugh
 Kevin McCarthy
