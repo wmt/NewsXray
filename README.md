@@ -11,7 +11,7 @@ The app works by using the Face++ face recognition API to match pictures to name
 
 # Adding People to the App
 1) Use Ryan's Java program (JAR file link here: https://drive.google.com/open?id=1QW93s893JZhLwl6oJZP6O88DggFvLUuX) to:
-    - Add new person's photo to Face++ using a 
+    - Add new person's photo to Face++ using a URL (URL must end in JPG or PNG, cannot be larger than 2MB, and must be between 48x48 to 4096x4096 pixels)
     - Associate photo with name of target
 2) Create document in Firebase Cloudstore "TestDatabase" containing the following fields (case-sensitive): 
     - docID [string] : recommend it matches person's name to help with UI
