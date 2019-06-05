@@ -20,7 +20,7 @@ import { Divider, Input, Button, Card } from 'react-native-elements';
 import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
 import LottieView from 'lottie-react-native';
 
-import { Camera, FaceDetector, Permissions } from 'expo';
+import { Camera, Permissions } from 'expo';
 // import { FaceDetector } from 'expo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FacePlusPlusApi from '../backend/FacePlusPlusApi';
@@ -34,9 +34,14 @@ import Crowdsource from '../backend/Crowdsource';
 
 
 
-var loadingText = ['Composing face', 'Predicting the political climate','Detecting the invisible hand', 'Reading facial expressions', 'Searching for lizard people', 'Just Google it', 'Not all faces are what they appear']
+var loadingText = ['Composing face', 'Predicting the political climate','Whiz bang AI magic', 'Detecting the invisible hand', 'Reading facial expressions', 'Searching for lizard people', 'Just Google it', 'Not all faces are what they appear', 'Isolating face', 'Contacting the intertubes', 'Almost done', 'Any day now']
 
 export default class HomeScreen extends React.Component {
+  constructor(props){
+    super(props);
+    this.renderSource = this.renderSource.bind(this);
+    this.renderAmount = this.renderAmount.bind(this);
+    }
 
   static navigationOptions = {
     header: null,
@@ -67,13 +72,21 @@ export default class HomeScreen extends React.Component {
     no: false,
     didSubmit: false,
     scannedFace: null,
+    photoURL: "",
 
   };
 
-  //opens the modal for app information and tutorial
-  setModalVisible(visible) {
-    this.setState({modalVisible: visible});
-  }
+  renderSource() {
+  return this.state.funding.map(([source, amount], i) => (<Text key={i} style={styles.tableData} 
+  textStyle={styles.tableText}>{source}</Text>))}
+
+  renderAmount() {
+  return this.state.funding.map(([source, amount], i) => (<Text key={i} style={styles.tableData}
+  textStyle={styles.tableText}>{amount}</Text>))} 
+    //opens the modal for app information and tutorial
+    setModalVisible(visible) {
+      this.setState({modalVisible: visible});
+    }
 
   //opens modal for returned data
   setResultModal(visible, returnedName) {
@@ -104,23 +117,7 @@ export default class HomeScreen extends React.Component {
   
   }
 
-  //switches the boolean values, essentially controls
-  //the messages displayed which tell us if there is a face
-  //detected
-  handleFacesDetected = ({faces}) => {
-    if (faces.length === 1) 
-    {
-      this.setState({
-        faceDetected: true
-      });
-    }
-    else
-    {
-      this.setState({
-        faceDetected: false
-      })
-    }
-  }
+
 
 componentWillUnmount() {
   this._isMounted = false;
@@ -140,6 +137,7 @@ takePicture = () => {
     name: "Unknown",
     party: "Unknown",
     occupation: "Unknown",
+    photoURL: "",
     funding: [],
     image: null,
     loading: true,
@@ -181,12 +179,8 @@ takePicture = () => {
          occupation: doc.data().occupation,
          funding: Object.entries(doc.data().funding),
          notable: doc.data().notable,
+         photoURL: doc.data().url,
        })
-       console.log(doc.data().name);
-       console.log(doc.data().occupation);
-       console.log(doc.data().party);
-       console.log(doc.data().funding);
-       console.log(doc.data().notable)
        this.setResultModal(true,this.state.name);
        this.setState({
          loading: false,
@@ -228,13 +222,6 @@ takePicture = () => {
            style={{flex: 1}} 
            type={this.state.type}
            ratio="1:1"
-           onFacesDetected = {this.state.faceDetecting ? this.handleFacesDetected: undefined }
-           onFaceDetectionError = {this.handleFaceDetectionErorr}
-           faceDetectorSettings = {{
-             mode: FaceDetector.Constants.Mode.fast,
-             detectLandmarks: FaceDetector.Constants.Landmarks.all,
-             runClassifications: FaceDetector.Constants.Classifications.none,
-           }}
            ref = {ref => {
              this.camera = ref;
            }}>
@@ -275,7 +262,11 @@ takePicture = () => {
                   contentContainerStyle={styles.modalContent}>
                   <View style={{flex: 1, flexDirection: 'row'}}>
                     <View style={{width: '50%', height: '100%'}}>
-                      <Image style={styles.resultImage} source={require('../assets/images/robot-dev.png')}></Image>
+                    
+                      {this.state.photoURL === undefined ? 
+                      
+                      <Image style={styles.resultImage} source={require("../assets/images/robot-dev.png")}></Image> : 
+                      <Image style={styles.resultImage} source={{uri: this.state.photoURL}}></Image> }
                     </View>
 
                     <View style={{width: '50%', height: '100%'}}>
@@ -298,33 +289,23 @@ takePicture = () => {
                   <View style={{backgroundColor: 'rgba(91,127,177, 0.1)', borderRadius: 10, paddingTop: 5, marginLeft: 15, marginRight: 15, borderColor: 'rgba(0,0,0,0.2)', borderWidth: 1}}>
                     <Text style={styles.resultName}> {this.state.notable} </Text>
                   </View>
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center'}}>
-
-                    <View style={{width: 350, height: 200, marginTop: 20}}>
-                      <Table borderStyle={{borderColor: '#707070'}}>
-                        <Row data={this.state.tableHead} widthArr={this.state.widthArr} style={styles.tableHeader} textStyle={styles.tableHeaderText}></Row>
-                      </Table>
-
-                      <Table borderStyle={{borderColor: '#707070'}}>
-                        {
-                        this.state.funding.map(
-                        ([source, amount], i) => (
-                        <Row
-                          key = {i}
-                          widthArr={this.state.widthArr}
-                          style={styles.tableData}
-                          textStyle={styles.tableText}
-                          data={[source,amount]}
-                          ></Row>
-                        ))
-                        }
-                      </Table> 
+                  {/* NEW TABLE GOES RIGHT HERE */}
+                  <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 15, marginBottom: 0}}>
+                    <View style={{width: '54.5%', height: 50, backgroundColor: '#5B7FB1', borderColor: 'black', borderWidth: 1}}>
+                      <Text style={styles.tableHeaderTexts}>Funding Source</Text>
                     </View>
-                    </View>
-                
-                </ScrollView>
+                  
+                    <View style={{width: '32.5%', height: 50, backgroundColor: '#5B7FB1', borderColor: 'black', borderWidth: 1}}>
+                      <Text style={styles.tableHeaderTexts}>Amount</Text>
+                    </View> 
+                  </View>
+
+                  <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20, marginTop: 0}}>
+                    <View style={{width: '54.5%', backgroundColor: 'white', borderColor: 'black', borderWidth: 1, alignItems: 'center'}}>{this.renderSource()}</View>
+                    <View style={{width: '32.5%', backgroundColor: 'white', borderColor: 'black', borderWidth: 1, alignItems: 'center'}}>{this.renderAmount()}</View>
+                  </View>
+                  {/* ENDS */}
+                  </ScrollView>  
 
               </View>
             </View>
@@ -451,6 +432,7 @@ takePicture = () => {
                       <Text style={styles.knownTitle}> Please input what you know about the person. </Text>
                       <Input
                         placeholder=" Name"
+                        onChangeText= { (text) => this.setState({name: text})}
                         leftIcon={
                           <Icon
                             name='user'
@@ -462,6 +444,7 @@ takePicture = () => {
                         
                         <Input
                           placeholder=" Occupation"
+                          onChangeText= { (text) => this.setState({occupation: text})}
                           leftIcon={
                             <Icon
                               name='briefcase'
@@ -472,6 +455,7 @@ takePicture = () => {
                         
                         <Input 
                           placeholder=" Political Affiliation"
+                          onChangeText= { (text) => this.setState({party: text})}
                           leftIcon={
                             <Icon
                               name='flag'
@@ -482,6 +466,7 @@ takePicture = () => {
                         
                         <Input 
                           placeholder=" Notable information"
+                          onChangeText= { (text) => this.setState({notable: text})}
                           leftIcon={
                             <Icon
                               name='quote-right'
@@ -541,11 +526,6 @@ takePicture = () => {
           </View>
 
         </View>
-
-          {/* <View style={styles.cameraButtonsContainer}> */}
-            <Text style = {styles.faceDetectedText}>
-              {this.state.faceDetected ? 'Face Detected' : 'No face detected'}
-            </Text> 
 
             <TouchableOpacity>
               <MaterialCommunityIcons 
@@ -645,23 +625,19 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
 
-  //also new!
-  tableHeader: {
-    height: 50,
-    backgroundColor: '#5B7FB1',
-  },
-
   tableData: {
     height: 25,
     backgroundColor: 'white',
   },
 
-  tableHeaderText: {
+  tableHeaderTexts: {
     textAlign: 'center',
     fontWeight: 'bold',
-    color: 'white'
-    
-  },
+    color: 'white',
+    textAlign: 'center',
+    justifyContent: 'center',
+    marginTop: 11
+    },
 
   tableText: {
     textAlign: 'center'
