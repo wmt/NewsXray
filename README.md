@@ -9,6 +9,9 @@ In conclusion, there are currently too many talking heads on news channels advoc
 
 The app works by using the Face++ face recognition API to match pictures to names and these names are used to retrieve data from a Firebase Cloudstore. This data is returned back to the user. 
 
+# Privacy Policy
+No personal or usage data will be collected from users. The only exception to this is when users decide to submit new information to users about certain pundits and politicians recognized by the app. 
+
 # Adding People to the App
 1) Use Ryan's Java program (JAR file link here: https://drive.google.com/open?id=1QW93s893JZhLwl6oJZP6O88DggFvLUuX) to:
     - Add new person's photo to Face++ using a URL (URL must end in JPG or PNG, cannot be larger than 2MB, and must be between 48x48 to 4096x4096 pixels)
