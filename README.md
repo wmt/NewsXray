@@ -14,6 +14,7 @@ The app works by using the Face++ face recognition API to match pictures to name
     - Add new person's photo to Face++
     - Associate photo with name of target
 2) Create document in Firebase Cloudstore containing the following fields (case-sensitive): 
+    - docID [string]
     - name [string]
     - party [string]
     - occupation [string]
