@@ -73,6 +73,7 @@ export default class HomeScreen extends React.Component {
     didSubmit: false,
     scannedFace: null,
     photoURL: "",
+    smallPic: "Unknown"
 
   };
 
@@ -142,27 +143,30 @@ takePicture = () => {
     image: null,
     loading: true,
     loadingIndex: 0,
+    smallPic: "Unknown"
    });
-   console.log('DEV_MSG: picture taken');
    const db = firebase.firestore();
 
    this.camera.takePictureAsync( { base64: true } )
    .then( async function(result) {
      a = new FacePlusPlusApi();
      let pic64 = await ImageCompressor.compressImage(result.uri);
+     let smallPic = await ImageCompressor.compressSmallImage(result.uri); 
      let targetName = await a.upload(pic64);
-
-     return targetName;
+     return [smallPic,targetName];
+   }).then( result => {
+     this.setState({
+       pic: result[0]
+     }); 
+     return result[1]; 
    }).then( result =>  {
      this.setState({
        name: result,
     });
      return result; })
    .then( async function(result) {
-     console.log('name: '+ result);
      if ( result == 'Unknown') 
      { // text input goes here 
-      //  await Crowdsource.sendUnverified('Tester', 'Testing notes');
        return 'Unknown';
      }
      else {
@@ -195,7 +199,6 @@ takePicture = () => {
     }
    }); 
    };
-
  }  
 
 
@@ -345,6 +348,7 @@ takePicture = () => {
                     <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.  </Text>
                     {/* <Divider style={{ backgroundColor: 'blue', height: 10 }} /> */}
                     <Text style={styles.aboutLine2}>Get transparent facts instantly.</Text>
+                    <Text style={styles.aboutLine2}>Data taken from official government sources and watchdog sites.</Text>
                     </View>
                 </View>
               </View>
@@ -485,7 +489,7 @@ takePicture = () => {
                               [
                                 {text: 'Okay',
                                  onPress: ()=>{
-                                   Crowdsource.sendUnverified(this.state.name, this.state.party, this.state.occupation, this.state.notable)
+                                   Crowdsource.sendUnverified(this.state.name, this.state.party, this.state.occupation, this.state.notable, this.state.smallPic)
                                    this.setModalVisible(this.state.resultUnknownVisible=false)
                                    this.setState({
                                      yes: false,
