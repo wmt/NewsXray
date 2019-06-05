@@ -24,6 +24,7 @@ The app works by using the Face++ face recognition API to match pictures to name
 
 # Face++ (Face Recognition API) Login Credentials
 username: ryanzhang
+
 password: 123456
 
 # Current Database
