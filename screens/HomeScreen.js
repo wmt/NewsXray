@@ -156,7 +156,7 @@ takePicture = () => {
      return [smallPic,targetName];
    }).then( result => {
      this.setState({
-       pic: result[0]
+       smallPic: result[0]
      }); 
      return result[1]; 
    }).then( result =>  {
