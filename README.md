@@ -10,17 +10,17 @@ In conclusion, there are currently too many talking heads on news channels advoc
 The app works by using the Face++ face recognition API to match pictures to names and these names are used to retrieve data from a Firebase Cloudstore. This data is returned back to the user. 
 
 # Adding People to the App
-1) Use Ryan's Java program to:
-    - Add new person's photo to Face++
+1) Use Ryan's Java program (JAR file link here: https://drive.google.com/open?id=1QW93s893JZhLwl6oJZP6O88DggFvLUuX) to:
+    - Add new person's photo to Face++ using a 
     - Associate photo with name of target
-2) Create document in Firebase Cloudstore containing the following fields (case-sensitive): 
-    - docID [string]
-    - name [string]
+2) Create document in Firebase Cloudstore "TestDatabase" containing the following fields (case-sensitive): 
+    - docID [string] : recommend it matches person's name to help with UI
+    - name [string] : must match name you inputted in Java program
     - party [string]
     - occupation [string]
     - notable [string]
-    - funding [map{string,string}]
-    - url [string]
+    - funding [map{string,string}] : must be a map of string values
+    - url [string] : must be a valid URL to image
 
 # Face++ (Face Recognition API) Login Credentials
 username: ryanzhang
