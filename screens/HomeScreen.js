@@ -344,11 +344,12 @@ takePicture = () => {
                     {/* logo for application would go here */}
                     {/* <Text style={styles.aboutTitle}> About News X-Ray </Text> */}
                     <View style={styles.unknownContent}>
-                    <Image style={{width: "50%", height: "50%", alignSelf: 'center'}}source={require('../assets/images/logo.png')} />
-                    <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.  </Text>
-                    {/* <Divider style={{ backgroundColor: 'blue', height: 10 }} /> */}
-                    <Text style={styles.aboutLine2}>Get transparent facts instantly.</Text>
-                    <Text style={styles.aboutLine2}>Data taken from official government sources and watchdog sites.</Text>
+                      <Image style={{width: "50%", height: "50%", alignSelf: 'center'}}source={require('../assets/images/logo.png')} />
+                      <Divider style={{ backgroundColor: 'blue' }} />
+                      <Text style={styles.aboutText}> News X-Ray allows you to scan a pundit's face in real-time.</Text>
+                      {/* <Divider style={{ backgroundColor: 'blue', height: 10 }} /> */}
+                      <Text style={styles.aboutLine2}>Get transparent facts instantly.</Text>
+                      <Text style={styles.aboutText}> Version: 1.0.0</Text>
                     </View>
                 </View>
               </View>
