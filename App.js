@@ -63,3 +63,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
+
+
+'''
+last line of college life:)
+'''
